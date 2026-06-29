@@ -386,14 +386,18 @@ function renderSlots(s) {
   const grid = getOccupiedGrid(s);
   const ro = obrAvailable() && !isViewingOwn();
 
-  // Compute total armor slots filled
-  let activeArmorSlots = 0;
+  // Compute total armor DR (sum of item.dr * item.slots for all armor items, rounded down)
+  let totalDr = 0;
   if (Array.isArray(s.items)) {
     s.items.forEach(x => {
-      if (x.kind === 'armor') activeArmorSlots++;
+      if (x.kind === 'armor') {
+        const itemSlots = Number(x.slots) || 1;
+        const drVal = Number(x.dr) !== undefined && !isNaN(Number(x.dr)) ? Number(x.dr) : 0.5;
+        totalDr += drVal * itemSlots;
+      }
     });
   }
-  const dr = Math.min(3, Math.floor(activeArmorSlots / 2));
+  const dr = Math.floor(totalDr);
 
   // Update header tally displays
   const readoutEl = $('#slots-readout');
@@ -405,7 +409,7 @@ function renderSlots(s) {
   const drDisplayEl = $('#dr-value-display');
   if (drDisplayEl) {
     drDisplayEl.textContent = dr;
-    if (dr === 3) {
+    if (dr >= 3) {
       drDisplayEl.style.textShadow = '0 0 10px rgba(16, 185, 129, 0.6)';
     } else {
       drDisplayEl.style.textShadow = 'none';
@@ -427,33 +431,20 @@ function renderSlots(s) {
     if (!entry.item) {
       // Empty slot
       return `
-        <div class="slot slot-empty" ${labelAttr} data-state="empty">
-          <div class="slot-empty-label">Empty</div>
-          ${!ro ? `
-            <div class="slot-add-actions">
-              <button class="mini slot-add-armor-btn" ${labelAttr} title="Fill with Armor">+ Armor</button>
-              <button class="mini slot-add-item-btn" ${labelAttr} title="Add Item">+ Item</button>
-            </div>
-          ` : ''}
+        <div class="slot slot-empty" ${labelAttr} data-state="empty" ${!ro ? `onclick="openItemModal(null, '${zone}', ${index})"` : ''}>
+          <div class="slot-empty-label">${!ro ? '+ Add Item' : 'Empty'}</div>
         </div>
       `;
     }
 
-    if (entry.item.kind === 'armor') {
-      // Armor slot
-      return `
-        <div class="slot slot-armor" ${labelAttr} data-state="armor" draggable="${!ro ? 'true' : 'false'}" data-id="${entry.item.id}">
-          <span class="slot-armor-icon">🛡️ Armor</span>
-          ${!ro ? `<button class="mini danger slot-remove-armor-btn" data-id="${entry.item.id}" title="Remove Armor">&times;</button>` : ''}
-        </div>
-      `;
-    }
+    const isArmor = entry.item.kind === 'armor';
 
     // Custom item slot
     if (!entry.parentSlot) {
       // Secondary/overflow slot of a multi-slot item
+      const stateVal = isArmor ? 'armor' : 'item-overflow';
       return `
-        <div class="slot slot-item-overflow" ${labelAttr} data-state="item-overflow">
+        <div class="slot ${isArmor ? 'slot-armor-overflow' : 'slot-item-overflow'}" ${labelAttr} data-state="${stateVal}">
           <span class="dim">${escapeHtml(entry.item.name)} (cont.)</span>
         </div>
       `;
@@ -480,6 +471,7 @@ function renderSlots(s) {
       slotActions = `
         <span class="slot-actions" data-id="${entry.item.id}">
           <button class="mini slot-edit-btn" title="Edit">✎</button>
+          <button class="mini slot-dup-btn" title="Duplicate">❐</button>
           <button class="mini danger slot-del-btn" title="Delete">&times;</button>
         </span>
       `;
@@ -491,10 +483,16 @@ function renderSlots(s) {
       details += ` (${entry.item.dmg})`;
     } else if (entry.item.kind === 'shield' && entry.item.shieldMaxHP) {
       details += ` (Shield HP ${entry.item.shieldMaxHP})`;
+    } else if (isArmor) {
+      const itemSlots = Number(entry.item.slots) || 1;
+      const drVal = Number(entry.item.dr) !== undefined && !isNaN(Number(entry.item.dr)) ? Number(entry.item.dr) : 0.5;
+      details += ` (DR +${drVal * itemSlots})`;
     }
 
+    const stateVal = isArmor ? 'armor' : 'item';
+
     return `
-      <div class="slot slot-item" ${labelAttr} data-state="item" draggable="${!ro ? 'true' : 'false'}" data-id="${entry.item.id}">
+      <div class="slot slot-item" ${labelAttr} data-state="${stateVal}" draggable="${!ro ? 'true' : 'false'}" data-id="${entry.item.id}">
         <span class="slot-item-name-grid" title="${escapeAttr(entry.item.name + details)}">${escapeHtml(entry.item.name)}${escapeHtml(details)}</span>
         <div class="slot-item-details-grid">
           ${qtyStr}
@@ -606,54 +604,33 @@ function renderSlots(s) {
       };
     });
 
-    // Add Armor
-    root.querySelectorAll('.slot-add-armor-btn').forEach(btn => {
-      btn.onclick = (e) => {
-        e.stopPropagation();
-        const zone = btn.dataset.zone;
-        const index = Number(btn.dataset.index);
-        setState(st => {
-          st.items.push({
-            id: crypto.randomUUID(),
-            name: 'Armor',
-            kind: 'armor',
-            slots: 1,
-            zone,
-            zoneIndex: index
-          });
-          return st;
-        });
-      };
-    });
-
-    // Remove Armor
-    root.querySelectorAll('.slot-remove-armor-btn').forEach(btn => {
-      btn.onclick = (e) => {
-        e.stopPropagation();
-        const itemId = btn.dataset.id;
-        setState(st => {
-          st.items = st.items.filter(x => x.id !== itemId);
-          return st;
-        });
-      };
-    });
-
-    // Add Custom Item
-    root.querySelectorAll('.slot-add-item-btn').forEach(btn => {
-      btn.onclick = (e) => {
-        e.stopPropagation();
-        const zone = btn.dataset.zone;
-        const index = Number(btn.dataset.index);
-        openItemModal(null, zone, index);
-      };
-    });
-
     // Edit Item
     root.querySelectorAll('.slot-edit-btn').forEach(btn => {
       btn.onclick = (e) => {
         e.stopPropagation();
         const itemId = btn.closest('.slot-actions').dataset.id;
         openItemModal(itemId);
+      };
+    });
+
+    // Duplicate Item
+    root.querySelectorAll('.slot-dup-btn').forEach(btn => {
+      btn.onclick = (e) => {
+        e.stopPropagation();
+        const itemId = btn.closest('.slot-actions').dataset.id;
+        setState(st => {
+          const item = st.items.find(x => x.id === itemId);
+          if (item) {
+            const copy = {
+              ...structuredClone(item),
+              id: crypto.randomUUID(),
+              zone: null, // Clear zone to let mapping auto-assign it
+              zoneIndex: null
+            };
+            st.items.push(copy);
+          }
+          return st;
+        });
       };
     });
 
@@ -848,7 +825,7 @@ function openItemModal(itemId = null, zone = null, zoneIndex = null) {
       kindSelect.value = item.kind || 'general';
       slotsInput.value = item.slots ?? 1;
       weaponDmgInput.value = item.dmg || 'd6';
-      armorDrInput.value = item.dr ?? 1;
+      armorDrInput.value = item.dr ?? 0.5;
       if (armorCategorySelect) armorCategorySelect.value = item.category || 'torso';
       shieldMaxHPInput.value = item.shieldMaxHP ?? 3;
       
@@ -867,7 +844,7 @@ function openItemModal(itemId = null, zone = null, zoneIndex = null) {
     kindSelect.value = 'general';
     slotsInput.value = 1;
     weaponDmgInput.value = 'd6';
-    armorDrInput.value = 1;
+    armorDrInput.value = 0.5;
     if (armorCategorySelect) armorCategorySelect.value = 'torso';
     shieldMaxHPInput.value = 3;
     hasQtyCheckbox.checked = false;
@@ -892,9 +869,11 @@ function updateModalFields() {
 function handleKindChange() {
   const kind = $('#m-item-kind').value;
   const slotsInput = $('#m-item-slots');
+  const armorDrInput = $('#m-armor-dr');
   if (!editingItemId) {
     if (kind === 'armor') {
       slotsInput.value = 2;
+      if (armorDrInput) armorDrInput.value = 0.5;
     } else {
       slotsInput.value = 1;
     }
@@ -947,7 +926,8 @@ function wireModalHandlers() {
     if (kind === 'weapon') {
       updatedItem.dmg = $('#m-weapon-dmg').value.trim() || 'd6';
     } else if (kind === 'armor') {
-      updatedItem.dr = Number($('#m-armor-dr').value) || 0;
+      const parsedDr = Number($('#m-armor-dr').value);
+      updatedItem.dr = !isNaN(parsedDr) ? parsedDr : 0.5;
       updatedItem.category = $('#m-armor-category').value;
       if (editingItemId) {
         const oldItem = getState().items.find(x => x.id === editingItemId);
