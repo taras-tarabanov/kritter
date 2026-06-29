@@ -223,19 +223,9 @@ export function mount(root) {
               <input id="m-weapon-dmg" type="text" placeholder="e.g. d6, d8" value="d6" />
             </div>
 
-            <div id="m-armor-fields" class="form-row" hidden>
-              <div class="form-group">
-                <label for="m-armor-dr">DAMAGE REDUCTION (DR)</label>
-                <input id="m-armor-dr" type="number" min="0" value="1" />
-              </div>
-              <div class="form-group">
-                <label for="m-armor-category">ARMOR CATEGORY</label>
-                <select id="m-armor-category">
-                  <option value="head">Head</option>
-                  <option value="torso" selected>Torso</option>
-                  <option value="limbs">Limbs</option>
-                </select>
-              </div>
+            <div id="m-armor-fields" class="form-group" hidden>
+              <label for="m-armor-dr">DAMAGE REDUCTION (DR)</label>
+              <input id="m-armor-dr" type="number" min="0" value="1" />
             </div>
 
             <div id="m-shield-fields" class="form-group" hidden>
@@ -819,7 +809,6 @@ function openItemModal(itemId = null, zone = null, zoneIndex = null) {
   const slotsInput = $('#m-item-slots');
   const weaponDmgInput = $('#m-weapon-dmg');
   const armorDrInput = $('#m-armor-dr');
-  const armorCategorySelect = $('#m-armor-category');
   const shieldMaxHPInput = $('#m-shield-max-hp');
   const hasQtyCheckbox = $('#m-has-quantity');
   const maxQtyInput = $('#m-item-max-qty');
@@ -837,7 +826,6 @@ function openItemModal(itemId = null, zone = null, zoneIndex = null) {
       slotsInput.value = item.slots ?? 1;
       weaponDmgInput.value = item.dmg || 'd6';
       armorDrInput.value = item.dr ?? 0.5;
-      if (armorCategorySelect) armorCategorySelect.value = item.category || 'torso';
       shieldMaxHPInput.value = item.shieldMaxHP ?? 3;
       
       const hasQty = item.maxQuantity !== undefined && item.maxQuantity !== null;
@@ -856,7 +844,6 @@ function openItemModal(itemId = null, zone = null, zoneIndex = null) {
     slotsInput.value = 1;
     weaponDmgInput.value = 'd6';
     armorDrInput.value = 0.5;
-    if (armorCategorySelect) armorCategorySelect.value = 'torso';
     shieldMaxHPInput.value = 3;
     hasQtyCheckbox.checked = false;
     maxQtyInput.value = 20;
@@ -939,13 +926,6 @@ function wireModalHandlers() {
     } else if (kind === 'armor') {
       const parsedDr = Number($('#m-armor-dr').value);
       updatedItem.dr = !isNaN(parsedDr) ? parsedDr : 0.5;
-      updatedItem.category = $('#m-armor-category').value;
-      if (editingItemId) {
-        const oldItem = getState().items.find(x => x.id === editingItemId);
-        updatedItem.equipped = oldItem ? !!oldItem.equipped : true;
-      } else {
-        updatedItem.equipped = true;
-      }
     } else if (kind === 'shield') {
       updatedItem.shieldMaxHP = Number($('#m-shield-max-hp').value) || 1;
     }
@@ -970,13 +950,6 @@ function wireModalHandlers() {
 
     setState(st => {
       if (editingItemId) {
-        if (updatedItem.kind === 'armor' && updatedItem.equipped) {
-          st.items.forEach(x => {
-            if (x.kind === 'armor' && x.category === updatedItem.category && x.id !== editingItemId) {
-              x.equipped = false;
-            }
-          });
-        }
         st.items = st.items.map(x => x.id === editingItemId ? updatedItem : x);
       } else {
         for (let a = 0; a < amountToAdd; a++) {
@@ -984,13 +957,6 @@ function wireModalHandlers() {
             ...updatedItem,
             id: crypto.randomUUID()
           };
-          if (itemCopy.kind === 'armor' && itemCopy.equipped) {
-            st.items.forEach(x => {
-              if (x.kind === 'armor' && x.category === itemCopy.category) {
-                x.equipped = false;
-              }
-            });
-          }
           st.items.push(itemCopy);
         }
         if (kind === 'shield') {

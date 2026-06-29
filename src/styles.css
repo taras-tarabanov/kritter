@@ -807,25 +807,28 @@ button.ghost:hover { background: var(--bg); color: var(--ink); }
 }
 .slot-overlay-controls {
   position: absolute;
-  bottom: 2px;
-  left: 2px;
-  right: 2px;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%) translateY(0);
   display: flex;
   justify-content: center;
   align-items: center;
   gap: 4px;
   opacity: 0;
   pointer-events: none;
-  transition: opacity 0.15s ease;
+  transition: opacity 0.15s ease, transform 0.15s ease;
   background: var(--paper);
-  border-radius: 4px;
-  padding: 2px 0;
+  border-radius: 6px;
+  padding: 4px 6px;
   border: 1px solid var(--rule-dk);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.12);
+  z-index: 100;
+  white-space: nowrap;
 }
 .slot:hover .slot-overlay-controls {
   opacity: 1;
   pointer-events: auto;
+  transform: translateX(-50%) translateY(2px);
 }
 .slot-empty-label {
   font-weight: 600;
