@@ -60,42 +60,6 @@ export function mount(root) {
       </div>
 
       <div class="body">
-        <!-- LEFT COLUMN -->
-        <div class="col left">
-          <div class="panel">
-            <div class="panel-title">ABILITY SCORES</div>
-            <div id="abilities" class="abilities"></div>
-          </div>
-
-          <div class="panel">
-            <div class="panel-title">HIT POINTS</div>
-            <div class="hp-row" style="margin-top: 6px;">
-              <button id="hp-minus" class="mini">−</button>
-              <input id="f-hp-cur" type="number" />
-              <span class="dim">/</span>
-              <input id="f-hp-max" type="number" />
-              <button id="hp-plus" class="mini">+</button>
-            </div>
-          </div>
-
-          <div class="panel">
-            <div class="panel-title">DEFENSE</div>
-            <div class="kv-row">
-              <span>Damage Reduction</span>
-              <span id="dr-readout" class="big">0</span>
-            </div>
-            <div class="kv-row">
-              <span>Shield HP</span>
-              <span class="shield-hp">
-                <button id="shield-minus" class="mini">−</button>
-                <span id="shield-hp-cur">0</span>
-                <span class="dim">/ <span id="shield-hp-max">0</span></span>
-                <button id="shield-plus" class="mini">+</button>
-              </span>
-            </div>
-          </div>
-        </div>
-
         <!-- CENTER COLUMN (CENTERPIECE) -->
         <div class="col center">
           <div class="panel slots-panel" style="flex: 1; display: flex; flex-direction: column;">
@@ -285,32 +249,7 @@ export function render() {
   $('#f-careers-display').textContent =
       s.careers.map(id => careerById(id)?.name || '?').join(', ') || '(none — click EDIT)';
 
-  // abilities
-  renderAbilities(s, ro);
-
-  // defense
-  const dr = damageReduction(s);
-  $('#dr-readout').textContent = dr;
-
-  const maxShield = shieldMaxHP(s);
-  const shieldHpSpan = $('.shield-hp');
-  if (maxShield === 0) {
-    shieldHpSpan.innerHTML = `<span class="dim">No Shield</span>`;
-  } else {
-    shieldHpSpan.innerHTML = `
-      <button id="shield-minus" class="mini" ${ro?'disabled':''}>−</button>
-      <span id="shield-hp-cur">${s.shieldHP}</span>
-      <span class="dim">/ <span id="shield-hp-max">${maxShield}</span></span>
-      <button id="shield-plus" class="mini" ${ro?'disabled':''}>+</button>
-    `;
-    $('#shield-minus').onclick = () => setState(st => { st.shieldHP = Math.max(0, st.shieldHP - 1); return st; });
-    $('#shield-plus').onclick  = () => setState(st => { st.shieldHP = Math.min(shieldMaxHP(st), st.shieldHP + 1); return st; });
-  }
-
-  // hp + coins + portrait + motivation + gender + notes
-  $('#f-hp-cur').value = s.hp.current;
-  $('#f-hp-max').value = s.hp.max;
-  
+  // coins + motivation + gender + notes + portrait
   COIN_TYPES.forEach(c => {
     const el = $(`#f-coins-${c.key}`);
     if (el) el.value = (s.coins && s.coins[c.key]) || 0;
@@ -345,30 +284,6 @@ export function render() {
   renderGmTabs();
 }
 
-function renderAbilities(s, ro) {
-  const root = $('#abilities');
-  root.innerHTML = ABILITIES.map(a => {
-    const v = s.abilities[a.key];
-    return `
-      <div class="ab" title="${a.desc}">
-        <button class="mini" data-ab="${a.key}" data-d="-1" ${ro?'disabled':''}>−</button>
-        <div class="ab-mid">
-          <div class="ab-label">${a.label}</div>
-          <div class="ab-val">${v}</div>
-        </div>
-        <button class="mini" data-ab="${a.key}" data-d="1" ${ro?'disabled':''}>+</button>
-      </div>`;
-  }).join('');
-  root.querySelectorAll('button[data-ab]').forEach(btn => {
-    btn.onclick = () => {
-      const key = btn.dataset.ab, d = +btn.dataset.d;
-      setState(st => {
-        st.abilities[key] = Math.max(0, st.abilities[key] + d);
-        return st;
-      });
-    };
-  });
-}
 
 function renderSlots(s) {
   const cap = slotCapacity(s);
@@ -404,11 +319,6 @@ function renderSlots(s) {
     } else {
       drDisplayEl.style.textShadow = 'none';
     }
-  }
-
-  const drReadout = $('#dr-readout');
-  if (drReadout) {
-    drReadout.textContent = dr;
   }
 
   // Render a specific slot cell helper
@@ -495,6 +405,59 @@ function renderSlots(s) {
     `;
   }
 
+  // Helper for stats rendering
+  function renderStatHtml(abKey) {
+    const a = ABILITIES.find(x => x.key === abKey);
+    if (!a) return '';
+    const v = s.abilities[abKey] || 0;
+    return `
+      <div class="anatomy-stat" data-ab="${abKey}">
+        <div class="anatomy-stat-name">${escapeHtml(a.label)}</div>
+        <div class="anatomy-stat-row">
+          ${!ro ? `<button class="mini stat-btn stat-minus" data-ab="${abKey}">−</button>` : ''}
+          <span class="anatomy-stat-val">${v}</span>
+          ${!ro ? `<button class="mini stat-btn stat-plus" data-ab="${abKey}">+</button>` : ''}
+        </div>
+      </div>
+    `;
+  }
+
+  // Helper for HP rendering
+  function renderHpHtml() {
+    return `
+      <div class="anatomy-hp">
+        <div class="anatomy-hp-label">Hit Points</div>
+        <div class="anatomy-hp-row">
+          ${!ro ? `<button class="mini hp-btn hp-minus" title="Reduce HP">−</button>` : ''}
+          <span class="hp-val">${s.hp.current}</span>
+          <span class="hp-divider">/</span>
+          <span class="hp-max-val" title="${!ro ? 'Click to change Max HP' : ''}">${s.hp.max}</span>
+          ${!ro ? `<button class="mini hp-btn hp-plus" title="Increase HP">+</button>` : ''}
+        </div>
+      </div>
+    `;
+  }
+
+  // Helper for shield indicators under arms
+  const hasShield = s.items.some(x => x.kind === 'shield');
+  const maxShield = shieldMaxHP(s);
+
+  function renderShieldWidget(side) {
+    if (!hasShield) return `<div class="anatomy-shield-spacer"></div>`;
+    return `
+      <div class="anatomy-shield-widget" data-side="${side}">
+        <span class="shield-widget-icon" title="Shield HP">🛡️</span>
+        <div class="shield-widget-controls">
+          ${!ro ? `<button class="mini shield-widget-btn shield-widget-minus">−</button>` : ''}
+          <span class="shield-widget-val">${s.shieldHP}</span>
+          <span class="shield-widget-divider">/</span>
+          <span class="shield-widget-max">${maxShield}</span>
+          ${!ro ? `<button class="mini shield-widget-btn shield-widget-plus">+</button>` : ''}
+        </div>
+      </div>
+    `;
+  }
+
   // Render extra slots
   const extraCount = Math.max(0, cap - 10);
   let extraHtml = '';
@@ -513,23 +476,33 @@ function renderSlots(s) {
     `;
   }
 
-  // Assemble full HTML
+  // Assemble full HTML with stats positioning
   const html = `
     <div class="abstract-armor-system" id="armor-tracker" style="background: none; border: none; padding: 0; max-width: 100%;">
       <div class="anatomy-grid">
-        <!-- Head -->
+        <!-- Row 1: INT | Head | WIS -->
+        <div class="head-stat-l">${renderStatHtml('int')}</div>
         <div class="zone head-zone">
           <div class="zone-label">Head</div>
           ${renderSlotHtml('head', 0)}
         </div>
+        <div class="head-stat-r">${renderStatHtml('wis')}</div>
         
-        <!-- Right Arm -->
+        <!-- Row 2: L. Arm | Spacer | R. Arm -->
         <div class="zone arm-l-zone">
+          <div class="zone-label">L. Arm</div>
+          ${renderSlotHtml('l-arm', 0)}
+          ${renderShieldWidget('left')}
+        </div>
+        <div class="arm-spacer-zone"></div>
+        <div class="zone arm-r-zone">
           <div class="zone-label">R. Arm</div>
           ${renderSlotHtml('r-arm', 0)}
+          ${renderShieldWidget('right')}
         </div>
         
-        <!-- Torso -->
+        <!-- Row 3: STR | Torso (spans 3/4) | DEX -->
+        <div class="torso-stat-l1">${renderStatHtml('str')}</div>
         <div class="zone torso-zone">
           <div class="zone-label">Torso</div>
           ${renderSlotHtml('torso', 0)}
@@ -538,23 +511,21 @@ function renderSlots(s) {
           ${renderSlotHtml('torso', 3)}
           ${renderSlotHtml('torso', 4)}
         </div>
+        <div class="torso-stat-r1">${renderStatHtml('dex')}</div>
         
-        <!-- Left Arm -->
-        <div class="zone arm-r-zone">
-          <div class="zone-label">L. Arm</div>
-          ${renderSlotHtml('l-arm', 0)}
-        </div>
+        <!-- Row 4: CON | Covered by Torso | CHA -->
+        <div class="torso-stat-l2">${renderStatHtml('con')}</div>
+        <div class="torso-stat-r2">${renderStatHtml('cha')}</div>
         
-        <!-- Right Leg -->
+        <!-- Row 5: L. Leg | HP | R. Leg -->
         <div class="zone leg-l-zone">
-          <div class="zone-label">R. Leg</div>
-          ${renderSlotHtml('r-leg', 0)}
-        </div>
-        
-        <!-- Left Leg -->
-        <div class="zone leg-r-zone">
           <div class="zone-label">L. Leg</div>
           ${renderSlotHtml('l-leg', 0)}
+        </div>
+        <div class="hp-zone">${renderHpHtml()}</div>
+        <div class="zone leg-r-zone">
+          <div class="zone-label">R. Leg</div>
+          ${renderSlotHtml('r-leg', 0)}
         </div>
       </div>
       
@@ -646,6 +617,84 @@ function renderSlots(s) {
         const zone = slot.dataset.zone;
         const index = Number(slot.dataset.index);
         openItemModal(null, zone, index);
+      };
+    });
+
+    // Stats adjustments bindings
+    root.querySelectorAll('.stat-minus').forEach(btn => {
+      btn.onclick = (e) => {
+        e.stopPropagation();
+        const abKey = btn.dataset.ab;
+        setState(st => {
+          st.abilities[abKey] = Math.max(0, st.abilities[abKey] - 1);
+          return st;
+        });
+      };
+    });
+    root.querySelectorAll('.stat-plus').forEach(btn => {
+      btn.onclick = (e) => {
+        e.stopPropagation();
+        const abKey = btn.dataset.ab;
+        setState(st => {
+          st.abilities[abKey] = Math.max(0, st.abilities[abKey] + 1);
+          return st;
+        });
+      };
+    });
+
+    // Hit Points bindings
+    const hpMinusBtn = root.querySelector('.hp-minus');
+    if (hpMinusBtn) {
+      hpMinusBtn.onclick = (e) => {
+        e.stopPropagation();
+        setState(st => {
+          st.hp.current = Math.max(0, st.hp.current - 1);
+          return st;
+        });
+      };
+    }
+    const hpPlusBtn = root.querySelector('.hp-plus');
+    if (hpPlusBtn) {
+      hpPlusBtn.onclick = (e) => {
+        e.stopPropagation();
+        setState(st => {
+          st.hp.current = Math.min(st.hp.max, st.hp.current + 1);
+          return st;
+        });
+      };
+    }
+    const hpMaxValEl = root.querySelector('.hp-max-val');
+    if (hpMaxValEl) {
+      hpMaxValEl.onclick = (e) => {
+        e.stopPropagation();
+        const nextMax = parseInt(prompt("Enter Max HP:", s.hp.max));
+        if (!isNaN(nextMax)) {
+          setState(st => {
+            st.hp.max = nextMax;
+            st.hp.current = Math.min(st.hp.current, nextMax);
+            return st;
+          });
+        }
+      };
+    }
+
+    // Shield HP bindings in widgets
+    root.querySelectorAll('.shield-widget-minus').forEach(btn => {
+      btn.onclick = (e) => {
+        e.stopPropagation();
+        setState(st => {
+          st.shieldHP = Math.max(0, st.shieldHP - 1);
+          return st;
+        });
+      };
+    });
+    root.querySelectorAll('.shield-widget-plus').forEach(btn => {
+      btn.onclick = (e) => {
+        e.stopPropagation();
+        setState(st => {
+          st.shieldHP = Math.min(shieldMaxHP(st), st.shieldHP + 1);
+          return st;
+        });
       };
     });
 
@@ -980,8 +1029,6 @@ function wireStaticHandlers() {
   bindText('#f-gender',     (v, st) => st.gender = v);
   bindText('#f-portrait',   (v, st) => st.portrait = v);
   bindText('#f-notes',      (v, st) => st.notes = v);
-  bindNum ('#f-hp-cur',     (v, st) => st.hp.current = v);
-  bindNum ('#f-hp-max',     (v, st) => st.hp.max = v);
 
   // Coins fields
   COIN_TYPES.forEach(c => {
@@ -998,10 +1045,6 @@ function wireStaticHandlers() {
       return st;
     });
   });
-
-  // HP +/- shortcuts
-  $('#hp-minus').onclick = () => setState(st => { st.hp.current = Math.max(0, st.hp.current - 1); return st; });
-  $('#hp-plus').onclick  = () => setState(st => { st.hp.current = Math.min(st.hp.max, st.hp.current + 1); return st; });
 
   // Edit toggle
   $('#btn-edit').onclick = () => { editMode = !editMode; render(); };
