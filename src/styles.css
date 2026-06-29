@@ -714,36 +714,29 @@ button.ghost:hover { background: var(--bg); color: var(--ink); }
   top: 10px;
 }
 
-.arm-l-zone {
-  position: absolute;
-  left: 81px;
-  width: 76px;
-  top: 100px;
-}
-
-.torso-zone {
-  position: absolute;
-  left: 167px;
-  width: 106px;
-  top: 100px;
-  display: grid;
-  gap: 6px;
-}
-
+/* Screen Left slots (Character's Right) */
 .arm-r-zone {
   position: absolute;
-  left: 283px;
+  left: 51px;
   width: 76px;
-  top: 100px;
+  top: 90px;
 }
-
-.leg-l-zone {
+.leg-r-zone {
   position: absolute;
-  left: 81px;
+  left: 51px;
   width: 76px;
   top: 388px;
 }
 
+/* Center slots */
+.torso-zone {
+  position: absolute;
+  left: 167px;
+  width: 106px;
+  top: 90px;
+  display: grid;
+  gap: 6px;
+}
 .hp-zone {
   position: absolute;
   left: 167px;
@@ -751,9 +744,16 @@ button.ghost:hover { background: var(--bg); color: var(--ink); }
   top: 406px;
 }
 
-.leg-r-zone {
+/* Screen Right slots (Character's Left) */
+.arm-l-zone {
   position: absolute;
-  left: 283px;
+  left: 313px;
+  width: 76px;
+  top: 90px;
+}
+.leg-l-zone {
+  position: absolute;
+  left: 313px;
   width: 76px;
   top: 388px;
 }
@@ -761,36 +761,36 @@ button.ghost:hover { background: var(--bg); color: var(--ink); }
 /* Floating Stats Layer */
 .anatomy-floater {
   position: absolute;
-  width: 62px;
+  width: 76px;
   z-index: 10;
 }
-/* Left Stats Column */
-.stat-int { left: 8px; top: 26px; }
-.stat-str { left: 8px; top: 122px; }
-.stat-con { left: 8px; top: 180px; }
+/* Left Stats Column (aligned with Left slot column) */
+.stat-int { left: 51px; top: 26px; }
+.stat-str { left: 51px; top: 198px; }
+.stat-con { left: 51px; top: 256px; }
 
-/* Right Stats Column */
-.stat-wis { right: 8px; top: 26px; }
-.stat-dex { right: 8px; top: 122px; }
-.stat-cha { right: 8px; top: 180px; }
+/* Right Stats Column (aligned with Right slot column) */
+.stat-wis { left: 313px; top: 26px; }
+.stat-dex { left: 313px; top: 198px; }
+.stat-cha { left: 313px; top: 256px; }
 
-/* Custom Anatomy Widgets */
+/* Custom Anatomy Widgets (Flat Text Style) */
 .anatomy-stat {
-  background: var(--bg);
-  border: 1px solid var(--rule-dk);
-  border-radius: 6px;
-  padding: 4px;
+  background: none;
+  border: none;
+  border-radius: 0;
+  padding: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   text-align: center;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  box-shadow: none;
 }
 .anatomy-stat-name {
-  font-size: 0.65rem;
+  font-size: 0.72rem;
   font-weight: 700;
-  text-transform: uppercase;
+  text-transform: lowercase;
   color: var(--ink-soft);
   margin-bottom: 2px;
   letter-spacing: 0.5px;
@@ -798,42 +798,49 @@ button.ghost:hover { background: var(--bg); color: var(--ink); }
 .anatomy-stat-row {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
 }
 .anatomy-stat-val {
-  font-size: 0.95rem;
+  font-size: 1.1rem;
   font-weight: 700;
   color: var(--ink);
   min-width: 14px;
 }
 .stat-btn {
-  font-size: 0.65rem;
+  font-size: 0.8rem;
   width: 14px;
   height: 14px;
   padding: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 2px;
+  background: none;
+  border: none;
+  color: var(--ink-soft);
+  cursor: pointer;
+}
+.stat-btn:hover {
+  color: var(--ink);
+  background: none;
 }
 
 .anatomy-hp {
-  background: rgba(220, 38, 38, 0.08);
-  border: 1px solid rgba(220, 38, 38, 0.3);
-  border-radius: 6px;
-  padding: 4px 8px;
+  background: none;
+  border: none;
+  border-radius: 0;
+  padding: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  min-height: 52px;
-  box-shadow: 0 1px 3px rgba(220, 38, 38, 0.05);
+  min-height: auto;
+  box-shadow: none;
 }
 .anatomy-hp-label {
-  font-size: 0.65rem;
+  font-size: 0.72rem;
   font-weight: 700;
   text-transform: uppercase;
-  color: rgba(220, 38, 38, 0.85);
+  color: rgb(220, 38, 38);
   margin-bottom: 2px;
   letter-spacing: 0.5px;
 }
@@ -841,37 +848,39 @@ button.ghost:hover { background: var(--bg); color: var(--ink); }
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 4px;
+  gap: 6px;
 }
 .hp-val, .hp-max-val {
-  font-size: 1.1rem;
+  font-size: 1.2rem;
   font-weight: 700;
   color: rgb(220, 38, 38);
 }
 .hp-max-val {
   border-bottom: 1px dashed rgba(220, 38, 38, 0.4);
+  cursor: pointer;
 }
 .hp-divider {
-  font-size: 0.9rem;
+  font-size: 1rem;
   font-weight: 700;
-  color: rgba(220, 38, 38, 0.5);
-  margin: 0 4px;
+  color: rgba(220, 38, 38, 0.6);
+  margin: 0 2px;
 }
 .hp-btn {
-  font-size: 0.75rem;
-  width: 18px;
-  height: 18px;
+  font-size: 0.9rem;
+  width: 16px;
+  height: 16px;
   padding: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 3px;
-  background: rgba(220, 38, 38, 0.15);
-  border: 1px solid rgba(220, 38, 38, 0.3);
+  background: none;
+  border: none;
   color: rgb(220, 38, 38);
+  cursor: pointer;
 }
 .hp-btn:hover {
-  background: rgba(220, 38, 38, 0.3);
+  background: none;
+  color: rgba(220, 38, 38, 0.7);
 }
 
 .anatomy-shield-widget {
@@ -879,44 +888,57 @@ button.ghost:hover { background: var(--bg); color: var(--ink); }
   align-items: center;
   justify-content: center;
   gap: 4px;
-  background: rgba(59, 130, 246, 0.08);
-  border: 1px solid rgba(59, 130, 246, 0.25);
-  border-radius: 4px;
-  padding: 2px 4px;
-  margin-top: 4px;
-  font-size: 0.72rem;
-  box-shadow: 0 1px 2px rgba(59, 130, 246, 0.05);
+  background: none;
+  border: none;
+  border-radius: 0;
+  padding: 0;
+  margin-top: 6px;
+  font-size: 0.75rem;
+  box-shadow: none;
+  font-weight: 700;
+  color: var(--ink-soft);
 }
 .shield-widget-icon {
-  font-size: 0.75rem;
+  display: none;
 }
 .shield-widget-controls {
   display: flex;
   align-items: center;
-  gap: 2px;
+  gap: 4px;
+}
+.shield-widget-controls::before {
+  content: "Shield: ";
+  font-weight: 700;
 }
 .shield-widget-val {
   font-weight: 700;
   color: var(--ink);
 }
 .shield-widget-divider {
-  opacity: 0.5;
-}
-.shield-widget-max {
   opacity: 0.7;
 }
+.shield-widget-max {
+  opacity: 0.9;
+}
 .shield-widget-btn {
-  width: 14px;
-  height: 14px;
-  font-size: 0.65rem;
+  width: 12px;
+  height: 12px;
+  font-size: 0.75rem;
   padding: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 2px;
+  background: none;
+  border: none;
+  color: var(--ink-soft);
+  cursor: pointer;
+}
+.shield-widget-btn:hover {
+  background: none;
+  color: var(--ink);
 }
 .anatomy-shield-spacer {
-  height: 20px;
+  height: 16px;
 }
 
 /* Interactive Slots inside centerpiece */
