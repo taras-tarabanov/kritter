@@ -574,12 +574,12 @@ button.ghost:hover { background: var(--bg); color: var(--ink); }
   justify-content: space-between;
   align-items: center;
   flex: 1;
-  min-width: 0;
+  min-width: 0; /* CRITICAL FIX */
 }
 .slot-item-info {
   display: flex;
   align-items: baseline;
-  min-width: 0;
+  min-width: 0; /* CRITICAL FIX */
   flex: 1;
   gap: 6px;
 }
@@ -588,7 +588,7 @@ button.ghost:hover { background: var(--bg); color: var(--ink); }
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  min-width: 0;
+  min-width: 0; /* CRITICAL FIX */
 }
 .slot-item-source {
   white-space: nowrap;
@@ -728,7 +728,7 @@ button.ghost:hover { background: var(--bg); color: var(--ink); }
   top: 388px;
 }
 
-/* Center slots - WIDENED AND RECENTERED */
+/* Center slots - WIDENED & PROTECTED */
 .torso-zone {
   position: absolute;
   left: 147px;
@@ -736,6 +736,7 @@ button.ghost:hover { background: var(--bg); color: var(--ink); }
   top: 90px;
   display: grid;
   gap: 6px;
+  min-width: 0; /* CRITICAL FIX */
 }
 .hp-zone {
   position: absolute;
@@ -883,12 +884,8 @@ button.ghost:hover { background: var(--bg); color: var(--ink); }
   color: rgba(220, 38, 38, 0.7);
 }
 
-/* SHIELD WIDGET ABSOLUTE POSITIONING */
+/* SHIELD WIDGET (Reverted to natural flow) */
 .anatomy-shield-widget {
-  position: absolute;
-  left: 51px;
-  top: 155px;
-  width: 76px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -897,12 +894,11 @@ button.ghost:hover { background: var(--bg); color: var(--ink); }
   border: none;
   border-radius: 0;
   padding: 0;
-  margin-top: 0;
+  margin-top: 6px;
   font-size: 0.75rem;
   box-shadow: none;
   font-weight: 700;
   color: var(--ink-soft);
-  z-index: 10;
 }
 .shield-widget-icon {
   display: none;
@@ -965,8 +961,9 @@ button.ghost:hover { background: var(--bg); color: var(--ink); }
   text-align: center;
   min-height: 52px;
   position: relative;
-  /* FORCING BOUNDARIES TO PREVENT TEXT OVERFLOW */
+  /* AIRTIGHT CONSTRAINTS */
   width: 100%;
+  min-width: 0; /* CRITICAL FIX */
   overflow: hidden;
 }
 .slot:hover {
@@ -1033,7 +1030,7 @@ button.ghost:hover { background: var(--bg); color: var(--ink); }
   border-radius: 2px;
 }
 
-/* MODIFIED TRUNCATION BLOCK */
+/* MODIFIED TRUNCATION BLOCK FOR PRIMARY SLOTS */
 .slot-item-name-grid {
   font-weight: 700;
   font-size: 0.8rem;
@@ -1042,9 +1039,21 @@ button.ghost:hover { background: var(--bg); color: var(--ink); }
   text-overflow: ellipsis;
   max-width: 100%;
   width: 100%;
+  min-width: 0; /* CRITICAL FIX */
   display: block;
   margin-bottom: 2px;
   text-align: center;
+}
+
+/* MODIFIED TRUNCATION BLOCK FOR OVERFLOW (CONT.) SLOTS */
+.slot-armor-overflow span,
+.slot-item-overflow span {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: block;
+  width: 100%;
+  min-width: 0; /* CRITICAL FIX */
 }
 
 .slot-qty-badge {
