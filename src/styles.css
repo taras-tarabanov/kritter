@@ -1,9 +1,9 @@
 /* =========================================================
-   Knave Sheet — styling
-   - Parchment + ink palette to match the chargen
-   - Three-column body that collapses to one column on narrow
-     Owlbear popovers
-   ========================================================= */
+ *  Knave Sheet — styling
+ *  - Parchment + ink palette to match the chargen
+ *  - Three-column body that collapses to one column on narrow
+ *    Owlbear popovers
+ *  ========================================================= */
 
 :root {
   --bg:        #f4e9d8;
@@ -728,11 +728,11 @@ button.ghost:hover { background: var(--bg); color: var(--ink); }
   top: 388px;
 }
 
-/* Center slots */
+/* Center slots - WIDENED AND RECENTERED */
 .torso-zone {
   position: absolute;
-  left: 167px;
-  width: 106px;
+  left: 147px;
+  width: 146px;
   top: 90px;
   display: grid;
   gap: 6px;
@@ -883,7 +883,12 @@ button.ghost:hover { background: var(--bg); color: var(--ink); }
   color: rgba(220, 38, 38, 0.7);
 }
 
+/* SHIELD WIDGET ABSOLUTE POSITIONING */
 .anatomy-shield-widget {
+  position: absolute;
+  left: 51px;
+  top: 155px;
+  width: 76px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -892,11 +897,12 @@ button.ghost:hover { background: var(--bg); color: var(--ink); }
   border: none;
   border-radius: 0;
   padding: 0;
-  margin-top: 6px;
+  margin-top: 0;
   font-size: 0.75rem;
   box-shadow: none;
   font-weight: 700;
   color: var(--ink-soft);
+  z-index: 10;
 }
 .shield-widget-icon {
   display: none;
@@ -959,6 +965,9 @@ button.ghost:hover { background: var(--bg); color: var(--ink); }
   text-align: center;
   min-height: 52px;
   position: relative;
+  /* FORCING BOUNDARIES TO PREVENT TEXT OVERFLOW */
+  width: 100%;
+  overflow: hidden;
 }
 .slot:hover {
   border-color: var(--ink);
@@ -1023,6 +1032,8 @@ button.ghost:hover { background: var(--bg); color: var(--ink); }
   justify-content: center;
   border-radius: 2px;
 }
+
+/* MODIFIED TRUNCATION BLOCK */
 .slot-item-name-grid {
   font-weight: 700;
   font-size: 0.8rem;
@@ -1030,9 +1041,12 @@ button.ghost:hover { background: var(--bg); color: var(--ink); }
   overflow: hidden;
   text-overflow: ellipsis;
   max-width: 100%;
+  width: 100%;
+  display: block;
   margin-bottom: 2px;
   text-align: center;
 }
+
 .slot-qty-badge {
   font-size: 0.72rem;
   color: var(--ink-soft);
@@ -1083,7 +1097,3 @@ button.ghost:hover { background: var(--bg); color: var(--ink); }
     margin-bottom: -70px;
   }
 }
-
-
-
-
