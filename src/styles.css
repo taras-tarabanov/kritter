@@ -95,7 +95,7 @@ body {
 /* ---------- Body grid ---------- */
 .body {
   display: grid;
-  grid-template-columns: 1.1fr 0.9fr;
+  grid-template-columns: 1fr 1.25fr 1fr;
   gap: 10px;
   background: var(--paper);
   padding: 10px;
@@ -110,7 +110,11 @@ body {
   gap: 8px;
 }
 
-@media (max-width: 820px) {
+@media (max-width: 1024px) {
+  .body { grid-template-columns: 1.1fr 0.9fr; }
+}
+
+@media (max-width: 768px) {
   .header { grid-template-columns: 1fr 1fr; }
   .body   { grid-template-columns: 1fr; }
   .panel-row { grid-template-columns: 1fr; }
@@ -637,6 +641,171 @@ button.ghost:hover { background: var(--bg); color: var(--ink); }
   background: var(--accent);
   color: var(--bg);
 }
+
+/* Abstract Armor System & Anatomy Grid centerpiece */
+.dr-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 2px solid var(--rule-dk);
+  padding-bottom: 10px;
+  margin-bottom: 14px;
+}
+.dr-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--ink);
+}
+.dr-meter {
+  background: var(--ink);
+  color: var(--bg);
+  padding: 4px 10px;
+  border-radius: 6px;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+.slot-tally {
+  font-size: 0.8rem;
+  opacity: 0.85;
+}
+.dr-total {
+  font-weight: bold;
+  font-size: 0.9rem;
+}
+.dr-value {
+  color: var(--accent);
+  font-size: 1.15rem;
+}
+.dr-max {
+  opacity: 0.7;
+  font-size: 0.8rem;
+}
+
+/* 3-Column Anatomy Grid */
+.anatomy-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 10px;
+}
+.zone-label {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  margin-bottom: 4px;
+  text-align: center;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+/* Grid Placement Rules */
+.head-zone { grid-column: 2; }
+.torso-zone { grid-column: 2; display: grid; gap: 6px; }
+.arm-l-zone { grid-column: 1; }
+.arm-r-zone { grid-column: 3; }
+.leg-l-zone { grid-column: 1; width: 100%; }
+.leg-r-zone { grid-column: 3; width: 100%; }
+
+/* Interactive Slots inside centerpiece */
+.slot {
+  background-color: var(--bg);
+  border: 1px solid var(--rule-dk);
+  border-radius: 6px;
+  padding: 6px 4px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+  color: var(--ink-soft);
+  user-select: none;
+  text-align: center;
+  min-height: 52px;
+  position: relative;
+}
+.slot:hover {
+  border-color: var(--ink);
+  background-color: var(--paper);
+}
+.slot[data-state="armor"] {
+  background-color: rgba(180, 83, 9, 0.15);
+  border-color: var(--accent);
+  color: var(--ink);
+  font-weight: bold;
+}
+.slot[data-state="item"] {
+  background-color: var(--bg);
+  border-color: var(--ink);
+  color: var(--ink);
+}
+.slot[data-state="item-overflow"] {
+  background-color: var(--paper);
+  border: 1px dashed var(--rule-dk);
+  color: var(--ink-soft);
+  cursor: not-allowed;
+}
+
+/* Pockets & Pack (Extra slots at bottom) */
+.extra-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+  gap: 8px;
+  margin-top: 6px;
+}
+
+/* Action controls inside slots */
+.slot-add-actions {
+  display: flex;
+  gap: 4px;
+  margin-top: 4px;
+}
+.slot-add-actions button {
+  font-size: 0.65rem;
+  padding: 1px 4px;
+  height: 16px;
+  line-height: 1;
+}
+.slot-armor {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  padding: 2px 6px;
+}
+.slot-armor-icon {
+  font-size: 0.8rem;
+}
+.slot-remove-armor-btn {
+  font-size: 0.75rem;
+  padding: 0;
+  width: 14px;
+  height: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 2px;
+}
+.slot-item-name-grid {
+  font-weight: 700;
+  font-size: 0.8rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+  margin-bottom: 2px;
+}
+.slot-item-details-grid {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  margin-top: 2px;
+  font-size: 0.75rem;
+}
+
 
 
 

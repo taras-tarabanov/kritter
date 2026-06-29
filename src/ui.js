@@ -19,7 +19,7 @@ import {
   ABILITIES, CAREERS, WEAPONS, BODY_ARMORS, SHIELDS, careerById, COIN_TYPES
 } from './data.js';
 import { getState, setState, subscribe, replaceState, emptyCharacter } from './state.js';
-import { slotCapacity, slotsUsed, damageReduction, shieldMaxHP, inventoryRows } from './compute.js';
+import { slotCapacity, slotsUsed, damageReduction, shieldMaxHP, inventoryRows, getOccupiedGrid } from './compute.js';
 import { obrAvailable, getParty, getRole, getCurrentPlayerId, getViewingPlayerId, isViewingOwn, viewPlayer } from './obr.js';
 
 let editMode = false;
@@ -67,80 +67,79 @@ export function mount(root) {
             <div id="abilities" class="abilities"></div>
           </div>
 
-          <div class="panel-row">
-            <div class="panel">
-              <div class="panel-title">DEFENSE</div>
-              <div class="kv-row">
-                <span>Damage Reduction</span>
-                <span id="dr-readout" class="big">0</span>
-              </div>
-              <div class="kv-row">
-                <span>Shield HP</span>
-                <span class="shield-hp">
-                  <button id="shield-minus" class="mini">−</button>
-                  <span id="shield-hp-cur">0</span>
-                  <span class="dim">/ <span id="shield-hp-max">0</span></span>
-                  <button id="shield-plus" class="mini">+</button>
-                </span>
-              </div>
-            </div>
-
-            <div class="panel">
-              <div class="panel-title">HIT POINTS</div>
-              <div class="hp-row" style="margin-top: 6px;">
-                <button id="hp-minus" class="mini">−</button>
-                <input id="f-hp-cur" type="number" />
-                <span class="dim">/</span>
-                <input id="f-hp-max" type="number" />
-                <button id="hp-plus" class="mini">+</button>
-              </div>
+          <div class="panel">
+            <div class="panel-title">HIT POINTS</div>
+            <div class="hp-row" style="margin-top: 6px;">
+              <button id="hp-minus" class="mini">−</button>
+              <input id="f-hp-cur" type="number" />
+              <span class="dim">/</span>
+              <input id="f-hp-max" type="number" />
+              <button id="hp-plus" class="mini">+</button>
             </div>
           </div>
 
-          <div class="panel-row">
-            <div class="panel">
-              <div class="panel-title">COINS</div>
-              <div class="coins-grid">
-                ${COIN_TYPES.map(c => `
-                  <div class="coin-cell">
-                    <label style="color: ${c.color}">${c.label.split(' ')[0].toUpperCase()}</label>
-                    <input id="f-coins-${c.key}" type="number" min="0" class="coin-input" />
-                  </div>
-                `).join('')}
-              </div>
+          <div class="panel">
+            <div class="panel-title">DEFENSE</div>
+            <div class="kv-row">
+              <span>Damage Reduction</span>
+              <span id="dr-readout" class="big">0</span>
             </div>
-
-            <div class="panel">
-              <div class="panel-title">MOTIVATION</div>
-              <input id="f-motivation" type="text" class="full" style="margin-top: 4px;" />
+            <div class="kv-row">
+              <span>Shield HP</span>
+              <span class="shield-hp">
+                <button id="shield-minus" class="mini">−</button>
+                <span id="shield-hp-cur">0</span>
+                <span class="dim">/ <span id="shield-hp-max">0</span></span>
+                <button id="shield-plus" class="mini">+</button>
+              </span>
             </div>
           </div>
+        </div>
 
-          <div class="panel-row">
-            <div class="panel">
-              <div class="panel-title">PORTRAIT</div>
-              <div id="portrait-box" class="portrait-box">
-                <img id="portrait-img" alt="" hidden />
-                <div id="portrait-empty" class="portrait-empty">Click EDIT to set portrait</div>
+        <!-- CENTER COLUMN (CENTERPIECE) -->
+        <div class="col center">
+          <div class="panel slots-panel" style="flex: 1; display: flex; flex-direction: column;">
+            <div class="dr-header">
+              <div class="dr-title">INVENTORY & ARMOR</div>
+              <div class="dr-meter">
+                <div class="slot-tally" id="slots-readout">Slots: <b class="count-display">0</b> / 10</div>
+                <div class="dr-total">DR: <span class="dr-value" id="dr-value-display">0</span><span class="dr-max">/3</span></div>
               </div>
             </div>
-
-            <div class="panel" id="spells-panel">
-              <div class="panel-title">SPELLBOOKS</div>
-              <div id="spells-list" class="spells-list"></div>
-            </div>
+            <div id="slots-list" class="slots-list" style="flex: 1; overflow-y: auto;"></div>
           </div>
         </div>
 
         <!-- RIGHT COLUMN -->
         <div class="col right">
-          <div class="panel slots-panel">
-            <div class="panel-title">
-              ITEM SLOTS
-              <span class="dim" id="slots-readout">0 / 10</span>
+          <div class="panel">
+            <div class="panel-title">COINS</div>
+            <div class="coins-grid">
+              ${COIN_TYPES.map(c => `
+                <div class="coin-cell">
+                  <label style="color: ${c.color}">${c.label.split(' ')[0].toUpperCase()}</label>
+                  <input id="f-coins-${c.key}" type="number" min="0" class="coin-input" />
+                </div>
+              `).join('')}
             </div>
-            <div id="slots-list" class="slots-list"></div>
-            <button id="add-item-btn-slots" class="ghost" style="margin-top: 8px;">+ Add Item</button>
+          </div>
+
+          <div class="panel">
+            <div class="panel-title">PORTRAIT</div>
+            <div id="portrait-box" class="portrait-box">
+              <img id="portrait-img" alt="" hidden />
+              <div id="portrait-empty" class="portrait-empty">Click EDIT to set portrait</div>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-title">MOTIVATION</div>
+            <input id="f-motivation" type="text" class="full" style="margin-top: 4px;" />
+          </div>
+
+          <div class="panel" id="spells-panel">
+            <div class="panel-title">SPELLBOOKS</div>
+            <div id="spells-list" class="spells-list"></div>
           </div>
         </div>
       </div>
@@ -382,117 +381,202 @@ function renderAbilities(s, ro) {
 }
 
 function renderSlots(s) {
-  const cap   = slotCapacity(s);
-  const used  = slotsUsed(s);
-  const rows  = inventoryRows(s);
+  const cap = slotCapacity(s);
+  const used = slotsUsed(s);
+  const grid = getOccupiedGrid(s);
+  const ro = obrAvailable() && !isViewingOwn();
 
-  $('#slots-readout').textContent =
-    `${used} / ${cap}${used > cap ? '  ⚠ OVER' : ''}`;
-  $('#slots-readout').classList.toggle('over', used > cap);
+  // Compute total armor slots filled
+  let activeArmorSlots = 0;
+  if (Array.isArray(s.items)) {
+    s.items.forEach(x => {
+      if (x.kind === 'armor') activeArmorSlots++;
+    });
+  }
+  const dr = Math.min(3, Math.floor(activeArmorSlots / 2));
 
-  const flat = [];
-  for (const r of rows) {
-    if (r.slots > 1) {
-      for (let i = 0; i < r.slots; i++) {
-        flat.push({ ...r, slotIndex: i + 1, totalSlots: r.slots });
-      }
+  // Update header tally displays
+  const readoutEl = $('#slots-readout');
+  if (readoutEl) {
+    readoutEl.innerHTML = `Slots: <b class="count-display">${used}</b> / ${cap}`;
+    readoutEl.classList.toggle('over', used > cap);
+  }
+
+  const drDisplayEl = $('#dr-value-display');
+  if (drDisplayEl) {
+    drDisplayEl.textContent = dr;
+    if (dr === 3) {
+      drDisplayEl.style.textShadow = '0 0 10px rgba(16, 185, 129, 0.6)';
     } else {
-      flat.push({ ...r, slotIndex: 0, totalSlots: 1 });
+      drDisplayEl.style.textShadow = 'none';
     }
   }
 
-  let html = '';
-  const ro = obrAvailable() && !isViewingOwn();
+  const drReadout = $('#dr-readout');
+  if (drReadout) {
+    drReadout.textContent = dr;
+  }
 
-  for (let i = 0; i < Math.max(cap, flat.length); i++) {
-    const r = flat[i];
-    const over = i >= cap;
-    let label = '';
+  // Render a specific slot cell helper
+  function renderSlotHtml(zone, index) {
+    const entry = grid.find(g => g.zone === zone && g.index === index);
+    if (!entry) return '';
+
+    const labelAttr = `data-zone="${zone}" data-index="${index}"`;
+
+    if (!entry.item) {
+      // Empty slot
+      return `
+        <div class="slot slot-empty" ${labelAttr} data-state="empty">
+          <div class="slot-empty-label">Empty</div>
+          ${!ro ? `
+            <div class="slot-add-actions">
+              <button class="mini slot-add-armor-btn" ${labelAttr} title="Fill with Armor">+ Armor</button>
+              <button class="mini slot-add-item-btn" ${labelAttr} title="Add Item">+ Item</button>
+            </div>
+          ` : ''}
+        </div>
+      `;
+    }
+
+    if (entry.item.kind === 'armor') {
+      // Armor slot
+      return `
+        <div class="slot slot-armor" ${labelAttr} data-state="armor" draggable="${!ro ? 'true' : 'false'}" data-id="${entry.item.id}">
+          <span class="slot-armor-icon">🛡️ Armor</span>
+          ${!ro ? `<button class="mini danger slot-remove-armor-btn" data-id="${entry.item.id}" title="Remove Armor">&times;</button>` : ''}
+        </div>
+      `;
+    }
+
+    // Custom item slot
+    if (!entry.parentSlot) {
+      // Secondary/overflow slot of a multi-slot item
+      return `
+        <div class="slot slot-item-overflow" ${labelAttr} data-state="item-overflow">
+          <span class="dim">${escapeHtml(entry.item.name)} (cont.)</span>
+        </div>
+      `;
+    }
+
+    // Primary item slot
+    let qtyStr = '';
+    let qtyButtons = '';
+    let slotActions = '';
     
-    if (r) {
-      let displayName = r.name || '(unnamed)';
-      if (r.totalSlots > 1) {
-        displayName += ` #${r.slotIndex}`;
-      }
-
-      let details = '';
-      if (r.kind === 'weapon' && r.dmg) {
-        details += ` (${r.dmg})`;
-      } else if (r.kind === 'armor' && r.dr) {
-        details += ` (DR +${r.dr} - ${r.category ? r.category.toUpperCase() : 'TORSO'})`;
-      } else if (r.kind === 'shield' && r.shieldMaxHP) {
-        details += ` (Shield HP ${r.shieldMaxHP})`;
-      }
-
-      let qtyStr = '';
-      let qtyButtons = '';
-      let slotActions = '';
-      
-      if (r.maxQuantity !== undefined && r.maxQuantity !== null) {
-        qtyStr = `<span class="qty-text">${r.quantity}/${r.maxQuantity}${r.unit ? ' ' + r.unit : ''}</span>`;
-        if (!ro && r.id) {
-          qtyButtons = `
-            <span class="qty-adjust" data-id="${r.id}">
-              <button class="mini qty-minus" title="Reduce quantity">−</button>
-              <button class="mini qty-plus" title="Increase quantity">+</button>
-            </span>
-          `;
-        }
-      } else if (r.kind === 'armor' && r.id) {
-        const eqLabel = r.equipped ? '🛡️ Equipped' : 'Equip';
-        const eqClass = r.equipped ? 'eq-active' : 'eq-inactive';
-        if (!ro) {
-          qtyButtons = `
-            <button class="mini eq-toggle-btn ${eqClass}" data-id="${r.id}" title="Toggle equipped">${eqLabel}</button>
-          `;
-        } else {
-          qtyButtons = `
-            <span class="eq-badge ${eqClass}">${eqLabel}</span>
-          `;
-        }
-      }
-      
-      if (!ro && r.id) {
-        slotActions = `
-          <span class="slot-actions" data-id="${r.id}">
-            <button class="mini slot-edit-btn" title="Rename / Edit item">✎</button>
-            <button class="mini slot-dup-btn" title="Duplicate item">❐</button>
-            <button class="mini danger slot-del-btn" title="Delete item">×</button>
+    if (entry.item.maxQuantity !== undefined && entry.item.maxQuantity !== null) {
+      qtyStr = `<span class="qty-text">${entry.item.quantity}/${entry.item.maxQuantity}${entry.item.unit ? ' ' + entry.item.unit : ''}</span>`;
+      if (!ro) {
+        qtyButtons = `
+          <span class="qty-adjust" data-id="${entry.item.id}">
+            <button class="mini qty-minus" title="Reduce quantity">−</button>
+            <button class="mini qty-plus" title="Increase quantity">+</button>
           </span>
         `;
       }
-
-      label = `
-        <div class="slot-main">
-          <div class="slot-item-info">
-            <span class="slot-item-name" title="${escapeAttr(displayName + details)}">${escapeHtml(displayName)}${escapeHtml(details)}</span>
-            <span class="slot-item-source dim">— ${escapeHtml(r.source)}</span>
-          </div>
-          <div class="slot-item-controls">
-            ${qtyStr}
-            ${qtyButtons}
-            ${slotActions}
-          </div>
-        </div>
+    }
+    
+    if (!ro) {
+      slotActions = `
+        <span class="slot-actions" data-id="${entry.item.id}">
+          <button class="mini slot-edit-btn" title="Edit">✎</button>
+          <button class="mini danger slot-del-btn" title="Delete">&times;</button>
+        </span>
       `;
-    } else {
-      label = `<div class="slot-main"><span class="dim"></span></div>`;
     }
 
-    html += `
-      <div class="slot-row ${over?'over':''}"
-           draggable="${(r && r.id) ? 'true' : 'false'}"
-           data-id="${(r && r.id) || ''}">
-        <div class="slot-num">${i+1}</div>
-        ${label}
-      </div>`;
+    // Construct slot details
+    let details = '';
+    if (entry.item.kind === 'weapon' && entry.item.dmg) {
+      details += ` (${entry.item.dmg})`;
+    } else if (entry.item.kind === 'shield' && entry.item.shieldMaxHP) {
+      details += ` (Shield HP ${entry.item.shieldMaxHP})`;
+    }
+
+    return `
+      <div class="slot slot-item" ${labelAttr} data-state="item" draggable="${!ro ? 'true' : 'false'}" data-id="${entry.item.id}">
+        <span class="slot-item-name-grid" title="${escapeAttr(entry.item.name + details)}">${escapeHtml(entry.item.name)}${escapeHtml(details)}</span>
+        <div class="slot-item-details-grid">
+          ${qtyStr}
+          ${qtyButtons}
+          ${slotActions}
+        </div>
+      </div>
+    `;
   }
+
+  // Render extra slots
+  const extraCount = Math.max(0, cap - 10);
+  let extraHtml = '';
+  if (extraCount > 0) {
+    let cellsHtml = '';
+    for (let i = 0; i < extraCount; i++) {
+      cellsHtml += renderSlotHtml('extra', i);
+    }
+    extraHtml = `
+      <div class="extra-zones" id="extra-slots-container">
+        <div class="zone-label" style="margin-top: 16px; border-top: 1px dotted var(--rule-dk); padding-top: 10px;">Pockets / Pack</div>
+        <div class="extra-grid">
+          ${cellsHtml}
+        </div>
+      </div>
+    `;
+  }
+
+  // Assemble full HTML
+  const html = `
+    <div class="abstract-armor-system" id="armor-tracker" style="background: none; border: none; padding: 0; max-width: 100%;">
+      <div class="anatomy-grid">
+        <!-- Head -->
+        <div class="zone head-zone">
+          <div class="zone-label">Head</div>
+          ${renderSlotHtml('head', 0)}
+        </div>
+        
+        <!-- Right Arm -->
+        <div class="zone arm-l-zone">
+          <div class="zone-label">R. Arm</div>
+          ${renderSlotHtml('r-arm', 0)}
+        </div>
+        
+        <!-- Torso -->
+        <div class="zone torso-zone">
+          <div class="zone-label">Torso</div>
+          ${renderSlotHtml('torso', 0)}
+          ${renderSlotHtml('torso', 1)}
+          ${renderSlotHtml('torso', 2)}
+          ${renderSlotHtml('torso', 3)}
+          ${renderSlotHtml('torso', 4)}
+        </div>
+        
+        <!-- Left Arm -->
+        <div class="zone arm-r-zone">
+          <div class="zone-label">L. Arm</div>
+          ${renderSlotHtml('l-arm', 0)}
+        </div>
+        
+        <!-- Right Leg -->
+        <div class="zone leg-l-zone">
+          <div class="zone-label">R. Leg</div>
+          ${renderSlotHtml('r-leg', 0)}
+        </div>
+        
+        <!-- Left Leg -->
+        <div class="zone leg-r-zone">
+          <div class="zone-label">L. Leg</div>
+          ${renderSlotHtml('l-leg', 0)}
+        </div>
+      </div>
+      
+      ${extraHtml}
+    </div>
+  `;
 
   const root = $('#slots-list');
   root.innerHTML = html;
 
   if (!ro) {
-    // Quantity Adjustments
+    // Quantity minus
     root.querySelectorAll('.qty-minus').forEach(btn => {
       btn.onclick = (e) => {
         e.stopPropagation();
@@ -506,6 +590,8 @@ function renderSlots(s) {
         });
       };
     });
+    
+    // Quantity plus
     root.querySelectorAll('.qty-plus').forEach(btn => {
       btn.onclick = (e) => {
         e.stopPropagation();
@@ -520,30 +606,49 @@ function renderSlots(s) {
       };
     });
 
-    // Equip Toggles
-    root.querySelectorAll('.eq-toggle-btn').forEach(btn => {
+    // Add Armor
+    root.querySelectorAll('.slot-add-armor-btn').forEach(btn => {
       btn.onclick = (e) => {
         e.stopPropagation();
-        const itemId = btn.dataset.id;
+        const zone = btn.dataset.zone;
+        const index = Number(btn.dataset.index);
         setState(st => {
-          const item = st.items.find(x => x.id === itemId);
-          if (item && item.kind === 'armor') {
-            const nextEquipped = !item.equipped;
-            if (nextEquipped) {
-              st.items.forEach(x => {
-                if (x.kind === 'armor' && x.category === item.category && x.id !== itemId) {
-                  x.equipped = false;
-                }
-              });
-            }
-            item.equipped = nextEquipped;
-          }
+          st.items.push({
+            id: crypto.randomUUID(),
+            name: 'Armor',
+            kind: 'armor',
+            slots: 1,
+            zone,
+            zoneIndex: index
+          });
           return st;
         });
       };
     });
 
-    // Slot row inline actions
+    // Remove Armor
+    root.querySelectorAll('.slot-remove-armor-btn').forEach(btn => {
+      btn.onclick = (e) => {
+        e.stopPropagation();
+        const itemId = btn.dataset.id;
+        setState(st => {
+          st.items = st.items.filter(x => x.id !== itemId);
+          return st;
+        });
+      };
+    });
+
+    // Add Custom Item
+    root.querySelectorAll('.slot-add-item-btn').forEach(btn => {
+      btn.onclick = (e) => {
+        e.stopPropagation();
+        const zone = btn.dataset.zone;
+        const index = Number(btn.dataset.index);
+        openItemModal(null, zone, index);
+      };
+    });
+
+    // Edit Item
     root.querySelectorAll('.slot-edit-btn').forEach(btn => {
       btn.onclick = (e) => {
         e.stopPropagation();
@@ -551,24 +656,8 @@ function renderSlots(s) {
         openItemModal(itemId);
       };
     });
-    root.querySelectorAll('.slot-dup-btn').forEach(btn => {
-      btn.onclick = (e) => {
-        e.stopPropagation();
-        const itemId = btn.closest('.slot-actions').dataset.id;
-        setState(st => {
-          const item = st.items.find(x => x.id === itemId);
-          if (item) {
-            const copy = {
-              ...structuredClone(item),
-              id: crypto.randomUUID()
-            };
-            const idx = st.items.findIndex(x => x.id === itemId);
-            st.items.splice(idx + 1, 0, copy);
-          }
-          return st;
-        });
-      };
-    });
+
+    // Delete Item
     root.querySelectorAll('.slot-del-btn').forEach(btn => {
       btn.onclick = (e) => {
         e.stopPropagation();
@@ -583,18 +672,18 @@ function renderSlots(s) {
     });
 
     // Drag & Drop reordering
-    root.querySelectorAll('.slot-row[draggable="true"]').forEach(row => {
+    root.querySelectorAll('.slot[draggable="true"]').forEach(row => {
       row.ondragstart = (e) => {
         e.dataTransfer.setData('text/plain', row.dataset.id);
         row.classList.add('dragging');
       };
       row.ondragend = () => {
         row.classList.remove('dragging');
-        root.querySelectorAll('.slot-row').forEach(r => r.classList.remove('drag-over'));
+        root.querySelectorAll('.slot').forEach(r => r.classList.remove('drag-over'));
       };
     });
 
-    root.querySelectorAll('.slot-row').forEach(row => {
+    root.querySelectorAll('.slot').forEach(row => {
       row.ondragover = (e) => {
         e.preventDefault();
         row.classList.add('drag-over');
@@ -606,24 +695,32 @@ function renderSlots(s) {
         e.preventDefault();
         row.classList.remove('drag-over');
         const draggedId = e.dataTransfer.getData('text/plain');
-        const targetId = row.dataset.id;
-        if (!draggedId || draggedId === targetId) return;
+        const targetZone = row.dataset.zone;
+        const targetIndex = Number(row.dataset.index);
+        
+        if (!draggedId || targetZone === undefined) return;
 
         setState(st => {
-          const fromIdx = st.items.findIndex(x => x.id === draggedId);
-          if (fromIdx === -1) return st;
+          const draggedItem = st.items.find(x => x.id === draggedId);
+          if (!draggedItem) return st;
 
-          const [item] = st.items.splice(fromIdx, 1);
+          // Find if there is an item already in target slot
+          const targetItem = st.items.find(x => x.zone === targetZone && x.zoneIndex === targetIndex);
 
-          if (targetId) {
-            const toIdx = st.items.findIndex(x => x.id === targetId);
-            if (toIdx !== -1) {
-              st.items.splice(toIdx, 0, item);
-            } else {
-              st.items.push(item);
-            }
+          if (targetItem) {
+            // Swap their zones and indexes
+            const tempZone = draggedItem.zone;
+            const tempIndex = draggedItem.zoneIndex;
+
+            draggedItem.zone = targetItem.zone;
+            draggedItem.zoneIndex = targetItem.zoneIndex;
+
+            targetItem.zone = tempZone;
+            targetItem.zoneIndex = tempIndex;
           } else {
-            st.items.push(item);
+            // Target slot is empty, just move dragged item there
+            draggedItem.zone = targetZone;
+            draggedItem.zoneIndex = targetIndex;
           }
           return st;
         });
@@ -719,8 +816,13 @@ function renderGmTabs() {
   });
 }
 
-function openItemModal(itemId = null) {
+let targetSlotZone = null;
+let targetSlotIndex = null;
+
+function openItemModal(itemId = null, zone = null, zoneIndex = null) {
   editingItemId = itemId;
+  targetSlotZone = zone;
+  targetSlotIndex = zoneIndex;
   const modal = $('#item-modal');
   const titleEl = $('#modal-title');
   
@@ -834,6 +936,12 @@ function wireModalHandlers() {
       kind,
       slots
     };
+
+    // If pre-placing from grid click
+    if (!editingItemId && targetSlotZone !== null) {
+      updatedItem.zone = targetSlotZone;
+      updatedItem.zoneIndex = targetSlotIndex;
+    }
 
     // Strict sanitization: Only save attributes relevant to kind
     if (kind === 'weapon') {

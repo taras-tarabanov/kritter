@@ -30,15 +30,15 @@ export function slotsUsed(state) {
 }
 
 export function damageReduction(state) {
-  let dr = 0;
+  let activeArmorSlots = 0;
   if (Array.isArray(state.items)) {
     for (const item of state.items) {
-      if (item.kind === 'armor' && item.equipped) {
-        dr += Number(item.dr) || 0;
+      if (item.kind === 'armor') {
+        activeArmorSlots++;
       }
     }
   }
-  return dr;
+  return Math.min(3, Math.floor(activeArmorSlots / 2));
 }
 
 // Max shield HP available given selected shields (for "reset shield" button / display check)
@@ -101,5 +101,91 @@ function getSourceLabel(kind) {
     case 'spellbook': return 'Magic';
     default: return 'Gear';
   }
+}
+
+// Maps inventory items to the 10-slot anatomical grid map + extra slots
+export function getOccupiedGrid(state) {
+  const cap = slotCapacity(state);
+  const extraCount = Math.max(0, cap - 10);
+  
+  const slotDefs = [
+    { zone: 'head', index: 0 },
+    { zone: 'torso', index: 0 },
+    { zone: 'torso', index: 1 },
+    { zone: 'torso', index: 2 },
+    { zone: 'torso', index: 3 },
+    { zone: 'torso', index: 4 },
+    { zone: 'r-arm', index: 0 },
+    { zone: 'l-arm', index: 0 },
+    { zone: 'r-leg', index: 0 },
+    { zone: 'l-leg', index: 0 }
+  ];
+  for (let i = 0; i < extraCount; i++) {
+    slotDefs.push({ zone: 'extra', index: i });
+  }
+
+  const grid = slotDefs.map(def => ({ ...def, item: null, parentSlot: null }));
+
+  if (Array.isArray(state.items)) {
+    // 1. Place items that already have a zone assigned
+    for (const item of state.items) {
+      if (item.zone) {
+        const startIdx = grid.findIndex(g => g.zone === item.zone && g.index === item.zoneIndex);
+        if (startIdx !== -1) {
+          const itemSlots = Number(item.slots) || 1;
+          for (let s = 0; s < itemSlots; s++) {
+            const targetIdx = startIdx + s;
+            if (targetIdx < grid.length) {
+              grid[targetIdx].item = item;
+              grid[targetIdx].parentSlot = (s === 0);
+            }
+          }
+        }
+      }
+    }
+
+    // 2. Place items that do not have a zone yet (migration/fallback)
+    for (const item of state.items) {
+      if (!item.zone) {
+        const itemSlots = Number(item.slots) || 1;
+        let foundIdx = -1;
+        
+        // Try to find consecutive free slots
+        for (let i = 0; i <= grid.length - itemSlots; i++) {
+          let consecutiveFree = true;
+          for (let s = 0; s < itemSlots; s++) {
+            if (grid[i + s].item !== null) {
+              consecutiveFree = false;
+              break;
+            }
+          }
+          if (consecutiveFree) {
+            foundIdx = i;
+            break;
+          }
+        }
+        
+        // Fallback: any free slot
+        if (foundIdx === -1) {
+          foundIdx = grid.findIndex(g => g.item === null);
+        }
+
+        if (foundIdx !== -1) {
+          item.zone = grid[foundIdx].zone;
+          item.zoneIndex = grid[foundIdx].index;
+
+          for (let s = 0; s < itemSlots; s++) {
+            const targetIdx = foundIdx + s;
+            if (targetIdx < grid.length) {
+              grid[targetIdx].item = item;
+              grid[targetIdx].parentSlot = (s === 0);
+            }
+          }
+        }
+      }
+    }
+  }
+
+  return grid;
 }
 
