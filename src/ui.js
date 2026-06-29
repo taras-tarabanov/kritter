@@ -137,6 +137,7 @@ export function mount(root) {
               <span class="dim" id="slots-readout">0 / 10</span>
             </div>
             <div id="slots-list" class="slots-list"></div>
+            <button id="add-item-btn-slots" class="ghost" style="margin-top: 8px;">+ Add Item</button>
           </div>
         </div>
       </div>
@@ -246,6 +247,12 @@ export function mount(root) {
                 <input id="m-item-unit" type="text" placeholder="e.g. ft, arrows, uses" value="uses" />
               </div>
             </div>
+
+            <!-- Amount to Add (Copies) -->
+            <div id="m-amount-to-add-container" class="form-group">
+              <label for="m-amount-to-add">AMOUNT TO ADD (COPIES)</label>
+              <input id="m-amount-to-add" type="number" min="1" value="1" />
+            </div>
           </div>
           <div class="modal-footer">
             <button id="modal-cancel-btn" class="btn-cancel">Cancel</button>
@@ -326,8 +333,10 @@ export function render() {
   $('#edit-panels').hidden = !editMode;
   if (editMode) renderEditPanels(s);
 
-  // toolbar / read-only badge
+  // toolbar / read-only badge & slots add item button visibility
   $('#readonly-flag').hidden = !ro;
+  const addItemBtnSlots = $('#add-item-btn-slots');
+  if (addItemBtnSlots) addItemBtnSlots.hidden = ro;
   toggleReadonly(ro);
 
   // GM tabs
@@ -404,6 +413,8 @@ function renderSlots(s) {
 
       let qtyStr = '';
       let qtyButtons = '';
+      let slotActions = '';
+      
       if (r.maxQuantity !== undefined && r.maxQuantity !== null) {
         qtyStr = ` (${r.quantity}/${r.maxQuantity}${r.unit ? ' ' + r.unit : ''})`;
         if (!ro && r.id) {
@@ -415,14 +426,26 @@ function renderSlots(s) {
           `;
         }
       }
+      
+      if (!ro && r.id) {
+        slotActions = `
+          <span class="slot-actions" data-id="${r.id}">
+            <button class="mini slot-edit-btn" title="Rename / Edit item">✎</button>
+            <button class="mini slot-dup-btn" title="Duplicate item">❐</button>
+            <button class="mini danger slot-del-btn" title="Delete item">×</button>
+          </span>
+        `;
+      }
 
-      label = `${displayName}${details}${qtyStr} ${qtyButtons} <span class="dim">— ${r.source}</span>`;
+      label = `${displayName}${details}${qtyStr}${qtyButtons}${slotActions} <span class="dim">— ${r.source}</span>`;
     } else {
-      label = '<span class="dim">— empty —</span>';
+      label = '';
     }
 
     html += `
-      <div class="slot-row ${over?'over':''}">
+      <div class="slot-row ${over?'over':''}"
+           draggable="${(r && r.id) ? 'true' : 'false'}"
+           data-id="${(r && r.id) || ''}">
         <div class="slot-num">${i+1}</div>
         <div class="slot-name">${label}</div>
       </div>`;
@@ -432,6 +455,7 @@ function renderSlots(s) {
   root.innerHTML = html;
 
   if (!ro) {
+    // Quantity Adjustments
     root.querySelectorAll('.qty-minus').forEach(btn => {
       btn.onclick = (e) => {
         e.stopPropagation();
@@ -453,6 +477,93 @@ function renderSlots(s) {
           const item = st.items.find(x => x.id === itemId);
           if (item && item.maxQuantity) {
             item.quantity = Math.min(item.maxQuantity, item.quantity + 1);
+          }
+          return st;
+        });
+      };
+    });
+
+    // Slot row inline actions
+    root.querySelectorAll('.slot-edit-btn').forEach(btn => {
+      btn.onclick = (e) => {
+        e.stopPropagation();
+        const itemId = btn.closest('.slot-actions').dataset.id;
+        openItemModal(itemId);
+      };
+    });
+    root.querySelectorAll('.slot-dup-btn').forEach(btn => {
+      btn.onclick = (e) => {
+        e.stopPropagation();
+        const itemId = btn.closest('.slot-actions').dataset.id;
+        setState(st => {
+          const item = st.items.find(x => x.id === itemId);
+          if (item) {
+            const copy = {
+              ...structuredClone(item),
+              id: crypto.randomUUID()
+            };
+            const idx = st.items.findIndex(x => x.id === itemId);
+            st.items.splice(idx + 1, 0, copy);
+          }
+          return st;
+        });
+      };
+    });
+    root.querySelectorAll('.slot-del-btn').forEach(btn => {
+      btn.onclick = (e) => {
+        e.stopPropagation();
+        const itemId = btn.closest('.slot-actions').dataset.id;
+        if (confirm('Delete this item?')) {
+          setState(st => {
+            st.items = st.items.filter(x => x.id !== itemId);
+            return st;
+          });
+        }
+      };
+    });
+
+    // Drag & Drop reordering
+    root.querySelectorAll('.slot-row[draggable="true"]').forEach(row => {
+      row.ondragstart = (e) => {
+        e.dataTransfer.setData('text/plain', row.dataset.id);
+        row.classList.add('dragging');
+      };
+      row.ondragend = () => {
+        row.classList.remove('dragging');
+        root.querySelectorAll('.slot-row').forEach(r => r.classList.remove('drag-over'));
+      };
+    });
+
+    root.querySelectorAll('.slot-row').forEach(row => {
+      row.ondragover = (e) => {
+        e.preventDefault();
+        row.classList.add('drag-over');
+      };
+      row.ondragleave = () => {
+        row.classList.remove('drag-over');
+      };
+      row.ondrop = (e) => {
+        e.preventDefault();
+        row.classList.remove('drag-over');
+        const draggedId = e.dataTransfer.getData('text/plain');
+        const targetId = row.dataset.id;
+        if (!draggedId || draggedId === targetId) return;
+
+        setState(st => {
+          const fromIdx = st.items.findIndex(x => x.id === draggedId);
+          if (fromIdx === -1) return st;
+
+          const [item] = st.items.splice(fromIdx, 1);
+
+          if (targetId) {
+            const toIdx = st.items.findIndex(x => x.id === targetId);
+            if (toIdx !== -1) {
+              st.items.splice(toIdx, 0, item);
+            } else {
+              st.items.push(item);
+            }
+          } else {
+            st.items.push(item);
           }
           return st;
         });
@@ -562,9 +673,12 @@ function openItemModal(itemId = null) {
   const hasQtyCheckbox = $('#m-has-quantity');
   const maxQtyInput = $('#m-item-max-qty');
   const unitInput = $('#m-item-unit');
+  const amountToAddInput = $('#m-amount-to-add');
+  const amountToAddContainer = $('#m-amount-to-add-container');
 
   if (itemId) {
     titleEl.textContent = 'Edit Item';
+    if (amountToAddContainer) amountToAddContainer.hidden = true;
     const item = getState().items.find(x => x.id === itemId);
     if (item) {
       nameInput.value = item.name || '';
@@ -581,6 +695,10 @@ function openItemModal(itemId = null) {
     }
   } else {
     titleEl.textContent = 'Add Item';
+    if (amountToAddContainer) {
+      amountToAddContainer.hidden = false;
+      amountToAddInput.value = 1;
+    }
     nameInput.value = '';
     kindSelect.value = 'general';
     slotsInput.value = 1;
@@ -654,6 +772,7 @@ function wireModalHandlers() {
       slots
     };
 
+    // Strict sanitization: Only save attributes relevant to kind
     if (kind === 'weapon') {
       updatedItem.dmg = $('#m-weapon-dmg').value.trim() || 'd6';
     } else if (kind === 'armor') {
@@ -678,11 +797,18 @@ function wireModalHandlers() {
       }
     }
 
+    const amountToAdd = !editingItemId ? (Number($('#m-amount-to-add').value) || 1) : 1;
+
     setState(st => {
       if (editingItemId) {
         st.items = st.items.map(x => x.id === editingItemId ? updatedItem : x);
       } else {
-        st.items.push(updatedItem);
+        for (let a = 0; a < amountToAdd; a++) {
+          st.items.push({
+            ...updatedItem,
+            id: crypto.randomUUID()
+          });
+        }
         if (kind === 'shield') {
           st.shieldHP = shieldMaxHP(st);
         }
@@ -740,9 +866,12 @@ function wireStaticHandlers() {
     }
   };
 
-  // Add Item button
+  // Add Item buttons (Edit Panel and Slots list)
   const addItemBtn = $('#add-item-btn');
   if (addItemBtn) addItemBtn.onclick = () => openItemModal();
+
+  const addItemBtnSlots = $('#add-item-btn-slots');
+  if (addItemBtnSlots) addItemBtnSlots.onclick = () => openItemModal();
 
   // Wire Modal handlers
   wireModalHandlers();

@@ -509,3 +509,46 @@ button.ghost:hover { background: var(--bg); color: var(--ink); }
   background: var(--ink);
 }
 
+/* Drag and Drop */
+.slot-row[draggable="true"] {
+  cursor: grab;
+}
+.slot-row.dragging {
+  opacity: 0.4;
+  border: 1px dashed var(--rule-dk);
+}
+.slot-row.drag-over {
+  background: var(--bg) !important;
+  border-top: 2px solid var(--accent);
+}
+
+/* Slot actions menu */
+.slot-actions {
+  display: inline-flex;
+  gap: 2px;
+  margin-left: 6px;
+  align-items: center;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+  vertical-align: middle;
+}
+.slot-row:hover .slot-actions {
+  opacity: 1;
+}
+.slot-actions .mini {
+  width: 18px;
+  height: 18px;
+  font-size: 0.75rem;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.slot-actions .slot-del-btn {
+  color: var(--bad);
+  border-color: var(--bad);
+}
+.slot-actions .slot-del-btn:hover {
+  background: var(--bad-bg);
+}
+
