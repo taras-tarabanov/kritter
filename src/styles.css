@@ -759,21 +759,22 @@ button.ghost:hover { background: var(--bg); color: var(--ink); }
   top: 388px;
 }
 
-/* Floating Stats Layer */
+/* Floating Stats Layer & Color Variables */
 .anatomy-floater {
   position: absolute;
   width: 76px;
   z-index: 10;
 }
-/* Left Stats Column (aligned with Left slot column) */
-.stat-int { left: 51px; top: 26px; }
-.stat-str { left: 51px; top: 198px; }
-.stat-con { left: 51px; top: 256px; }
 
-/* Right Stats Column (aligned with Right slot column) */
-.stat-wis { left: 313px; top: 26px; }
-.stat-dex { left: 313px; top: 198px; }
-.stat-cha { left: 313px; top: 256px; }
+/* Left Stats Column */
+.stat-int { left: 51px; top: 26px;  --stat-color: #3e5ba3; }
+.stat-str { left: 51px; top: 198px; --stat-color: #c13c52; }
+.stat-con { left: 51px; top: 256px; --stat-color: #8e5e28; }
+
+/* Right Stats Column */
+.stat-wis { left: 313px; top: 26px;  --stat-color: #357739; }
+.stat-dex { left: 313px; top: 198px; --stat-color: #bac041; }
+.stat-cha { left: 313px; top: 256px; --stat-color: #984698; }
 
 /* Custom Anatomy Widgets (Flat Text Style) */
 .anatomy-stat {
@@ -792,7 +793,8 @@ button.ghost:hover { background: var(--bg); color: var(--ink); }
   font-size: 0.72rem;
   font-weight: 700;
   text-transform: lowercase;
-  color: var(--ink-soft);
+  color: var(--stat-color, var(--ink-soft)); /* Inherits custom color */
+  opacity: 0.8; /* Maintains hierarchy */
   margin-bottom: 2px;
   letter-spacing: 0.5px;
 }
@@ -804,7 +806,7 @@ button.ghost:hover { background: var(--bg); color: var(--ink); }
 .anatomy-stat-val {
   font-size: 1.1rem;
   font-weight: 700;
-  color: var(--ink);
+  color: var(--stat-color, var(--ink)); /* Inherits custom color */
   min-width: 14px;
 }
 .stat-btn {
@@ -817,11 +819,14 @@ button.ghost:hover { background: var(--bg); color: var(--ink); }
   justify-content: center;
   background: none;
   border: none;
-  color: var(--ink-soft);
+  color: var(--stat-color, var(--ink-soft)); 
+  opacity: 0.6;
   cursor: pointer;
+  transition: opacity 0.15s ease;
 }
 .stat-btn:hover {
-  color: var(--ink);
+  color: var(--stat-color, var(--ink));
+  opacity: 1;
   background: none;
 }
 
