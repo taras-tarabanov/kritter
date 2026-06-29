@@ -479,53 +479,54 @@ function renderSlots(s) {
   // Assemble full HTML with stats positioning
   const html = `
     <div class="abstract-armor-system" id="armor-tracker" style="background: none; border: none; padding: 0; max-width: 100%;">
-      <div class="anatomy-grid">
-        <!-- Row 1: INT | Head | WIS -->
-        <div class="head-stat-l">${renderStatHtml('int')}</div>
-        <div class="zone head-zone">
-          <div class="zone-label">Head</div>
-          ${renderSlotHtml('head', 0)}
-        </div>
-        <div class="head-stat-r">${renderStatHtml('wis')}</div>
+      <div class="anatomy-diagram-wrapper">
+        <!-- Floating Stats Layer -->
+        <div class="anatomy-floater stat-int">${renderStatHtml('int')}</div>
+        <div class="anatomy-floater stat-str">${renderStatHtml('str')}</div>
+        <div class="anatomy-floater stat-con">${renderStatHtml('con')}</div>
         
-        <!-- Row 2: L. Arm | Spacer | R. Arm -->
-        <div class="zone arm-l-zone">
-          <div class="zone-label">L. Arm</div>
-          ${renderSlotHtml('l-arm', 0)}
-          ${renderShieldWidget('left')}
-        </div>
-        <div class="arm-spacer-zone"></div>
-        <div class="zone arm-r-zone">
-          <div class="zone-label">R. Arm</div>
-          ${renderSlotHtml('r-arm', 0)}
-          ${renderShieldWidget('right')}
-        </div>
-        
-        <!-- Row 3: STR | Torso (spans 3/4) | DEX -->
-        <div class="torso-stat-l1">${renderStatHtml('str')}</div>
-        <div class="zone torso-zone">
-          <div class="zone-label">Torso</div>
-          ${renderSlotHtml('torso', 0)}
-          ${renderSlotHtml('torso', 1)}
-          ${renderSlotHtml('torso', 2)}
-          ${renderSlotHtml('torso', 3)}
-          ${renderSlotHtml('torso', 4)}
-        </div>
-        <div class="torso-stat-r1">${renderStatHtml('dex')}</div>
-        
-        <!-- Row 4: CON | Covered by Torso | CHA -->
-        <div class="torso-stat-l2">${renderStatHtml('con')}</div>
-        <div class="torso-stat-r2">${renderStatHtml('cha')}</div>
-        
-        <!-- Row 5: L. Leg | HP | R. Leg -->
-        <div class="zone leg-l-zone">
-          <div class="zone-label">L. Leg</div>
-          ${renderSlotHtml('l-leg', 0)}
-        </div>
-        <div class="hp-zone">${renderHpHtml()}</div>
-        <div class="zone leg-r-zone">
-          <div class="zone-label">R. Leg</div>
-          ${renderSlotHtml('r-leg', 0)}
+        <div class="anatomy-floater stat-wis">${renderStatHtml('wis')}</div>
+        <div class="anatomy-floater stat-dex">${renderStatHtml('dex')}</div>
+        <div class="anatomy-floater stat-cha">${renderStatHtml('cha')}</div>
+
+        <!-- Anatomy Grid of Slots -->
+        <div class="anatomy-grid">
+          <!-- Row 1: Head -->
+          <div class="zone head-zone">
+            <div class="zone-label">Head</div>
+            ${renderSlotHtml('head', 0)}
+          </div>
+          
+          <!-- Row 2: L. Arm | Torso | R. Arm -->
+          <div class="zone arm-l-zone">
+            <div class="zone-label">L. Arm</div>
+            ${renderSlotHtml('l-arm', 0)}
+            ${renderShieldWidget('left')}
+          </div>
+          <div class="zone torso-zone">
+            <div class="zone-label">Torso</div>
+            ${renderSlotHtml('torso', 0)}
+            ${renderSlotHtml('torso', 1)}
+            ${renderSlotHtml('torso', 2)}
+            ${renderSlotHtml('torso', 3)}
+            ${renderSlotHtml('torso', 4)}
+          </div>
+          <div class="zone arm-r-zone">
+            <div class="zone-label">R. Arm</div>
+            ${renderSlotHtml('r-arm', 0)}
+            ${renderShieldWidget('right')}
+          </div>
+          
+          <!-- Row 3: L. Leg | HP | R. Leg -->
+          <div class="zone leg-l-zone">
+            <div class="zone-label">L. Leg</div>
+            ${renderSlotHtml('l-leg', 0)}
+          </div>
+          <div class="hp-zone">${renderHpHtml()}</div>
+          <div class="zone leg-r-zone">
+            <div class="zone-label">R. Leg</div>
+            ${renderSlotHtml('r-leg', 0)}
+          </div>
         </div>
       </div>
       
