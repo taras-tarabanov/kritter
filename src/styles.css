@@ -799,13 +799,31 @@ button.ghost:hover { background: var(--bg); color: var(--ink); }
   margin-bottom: 2px;
   text-align: center;
 }
-.slot-item-details-grid {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 2px;
+.slot-qty-badge {
+  font-size: 0.72rem;
+  color: var(--ink-soft);
   margin-top: 2px;
-  font-size: 0.75rem;
+  text-align: center;
+}
+.slot-overlay-controls {
+  position: absolute;
+  bottom: 2px;
+  left: 2px;
+  right: 2px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 4px;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+  background: var(--paper);
+  border-radius: 4px;
+  padding: 2px 0;
+  border: 1px solid var(--rule-dk);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+.slot:hover .slot-overlay-controls {
+  opacity: 1;
 }
 .slot-empty-label {
   font-weight: 600;

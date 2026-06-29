@@ -431,7 +431,7 @@ function renderSlots(s) {
     if (!entry.item) {
       // Empty slot
       return `
-        <div class="slot slot-empty" ${labelAttr} data-state="empty" ${!ro ? `onclick="openItemModal(null, '${zone}', ${index})"` : ''}>
+        <div class="slot slot-empty" ${labelAttr} data-state="empty">
           <div class="slot-empty-label">${!ro ? '+ Add Item' : 'Empty'}</div>
         </div>
       `;
@@ -456,7 +456,7 @@ function renderSlots(s) {
     let slotActions = '';
     
     if (entry.item.maxQuantity !== undefined && entry.item.maxQuantity !== null) {
-      qtyStr = `<span class="qty-text">${entry.item.quantity}/${entry.item.maxQuantity}${entry.item.unit ? ' ' + entry.item.unit : ''}</span>`;
+      qtyStr = `${entry.item.quantity}/${entry.item.maxQuantity}${entry.item.unit ? ' ' + entry.item.unit : ''}`;
       if (!ro) {
         qtyButtons = `
           <span class="qty-adjust" data-id="${entry.item.id}">
@@ -494,11 +494,13 @@ function renderSlots(s) {
     return `
       <div class="slot slot-item" ${labelAttr} data-state="${stateVal}" draggable="${!ro ? 'true' : 'false'}" data-id="${entry.item.id}">
         <span class="slot-item-name-grid" title="${escapeAttr(entry.item.name + details)}">${escapeHtml(entry.item.name)}${escapeHtml(details)}</span>
-        <div class="slot-item-details-grid">
-          ${qtyStr}
-          ${qtyButtons}
-          ${slotActions}
-        </div>
+        ${qtyStr ? `<div class="slot-qty-badge">${qtyStr}</div>` : ''}
+        ${!ro ? `
+          <div class="slot-overlay-controls">
+            ${qtyButtons}
+            ${slotActions}
+          </div>
+        ` : ''}
       </div>
     `;
   }
@@ -645,6 +647,15 @@ function renderSlots(s) {
             return st;
           });
         }
+      };
+    });
+
+    // Add Item click listener on empty slots
+    root.querySelectorAll('.slot-empty').forEach(slot => {
+      slot.onclick = (e) => {
+        const zone = slot.dataset.zone;
+        const index = Number(slot.dataset.index);
+        openItemModal(null, zone, index);
       };
     });
 
