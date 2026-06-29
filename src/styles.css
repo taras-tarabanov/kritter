@@ -509,6 +509,11 @@ button.ghost:hover { background: var(--bg); color: var(--ink); }
   background: var(--ink);
 }
 
+/* HTML5 hidden attribute fix */
+[hidden] {
+  display: none !important;
+}
+
 /* Drag and Drop */
 .slot-row[draggable="true"] {
   cursor: grab;
@@ -551,4 +556,44 @@ button.ghost:hover { background: var(--bg); color: var(--ink); }
 .slot-actions .slot-del-btn:hover {
   background: var(--bad-bg);
 }
+
+/* Flex slot alignment for long names and buttons */
+.slot-main {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex: 1;
+  min-width: 0;
+}
+.slot-item-info {
+  display: flex;
+  align-items: baseline;
+  min-width: 0;
+  flex: 1;
+  gap: 6px;
+}
+.slot-item-name {
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+.slot-item-source {
+  white-space: nowrap;
+  font-size: 0.75rem;
+}
+.slot-item-controls {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+  margin-left: 8px;
+}
+.qty-text {
+  font-size: 0.8rem;
+  color: var(--ink-soft);
+  margin-right: 2px;
+}
+
 

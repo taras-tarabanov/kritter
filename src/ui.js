@@ -416,7 +416,7 @@ function renderSlots(s) {
       let slotActions = '';
       
       if (r.maxQuantity !== undefined && r.maxQuantity !== null) {
-        qtyStr = ` (${r.quantity}/${r.maxQuantity}${r.unit ? ' ' + r.unit : ''})`;
+        qtyStr = `<span class="qty-text">${r.quantity}/${r.maxQuantity}${r.unit ? ' ' + r.unit : ''}</span>`;
         if (!ro && r.id) {
           qtyButtons = `
             <span class="qty-adjust" data-id="${r.id}">
@@ -437,9 +437,21 @@ function renderSlots(s) {
         `;
       }
 
-      label = `${displayName}${details}${qtyStr}${qtyButtons}${slotActions} <span class="dim">— ${r.source}</span>`;
+      label = `
+        <div class="slot-main">
+          <div class="slot-item-info">
+            <span class="slot-item-name" title="${escapeAttr(displayName + details)}">${escapeHtml(displayName)}${escapeHtml(details)}</span>
+            <span class="slot-item-source dim">— ${escapeHtml(r.source)}</span>
+          </div>
+          <div class="slot-item-controls">
+            ${qtyStr}
+            ${qtyButtons}
+            ${slotActions}
+          </div>
+        </div>
+      `;
     } else {
-      label = '';
+      label = `<div class="slot-main"><span class="dim"></span></div>`;
     }
 
     html += `
@@ -447,7 +459,7 @@ function renderSlots(s) {
            draggable="${(r && r.id) ? 'true' : 'false'}"
            data-id="${(r && r.id) || ''}">
         <div class="slot-num">${i+1}</div>
-        <div class="slot-name">${label}</div>
+        ${label}
       </div>`;
   }
 
