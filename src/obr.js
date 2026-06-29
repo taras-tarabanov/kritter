@@ -95,6 +95,18 @@ async function refreshPartyCache() {
   // dedupe by id
   const seen = new Set();
   allPlayersCache = all.filter(p => !seen.has(p.id) && seen.add(p.id));
+
+  // If viewing someone else, update state in real-time when they update their sheet
+  if (viewingPlayerId !== currentPlayerId) {
+    const target = allPlayersCache.find(p => p.id === viewingPlayerId);
+    if (target && target.character) {
+      const current = getState();
+      if (JSON.stringify(target.character) !== JSON.stringify(current)) {
+        replaceState(target.character);
+      }
+    }
+  }
+
   onPlayerListChange(allPlayersCache);
 }
 

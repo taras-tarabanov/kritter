@@ -163,9 +163,32 @@ body {
 }
 .shield-hp { display: flex; align-items: center; gap: 3px; }
 
-.coins-input {
-  width: 100%; padding: 4px; font-size: 1rem;
-  border: 1px solid var(--rule); border-radius: 4px;
+.coins-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 6px;
+}
+.coin-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+.coin-cell label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+.coin-input {
+  width: 100%;
+  text-align: center;
+  padding: 4px;
+  font-size: 1.1rem;
+  font-weight: 800;
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  background: var(--paper);
+  color: var(--ink);
 }
 
 /* ---------- Portrait ---------- */
@@ -271,3 +294,218 @@ button.ghost:hover { background: var(--bg); color: var(--ink); }
   padding: 6px 12px; border-radius: 6px; font-size: 0.85rem;
   z-index: 9999;
 }
+
+/* Quantity Adjustments */
+.qty-adjust {
+  display: inline-flex;
+  gap: 2px;
+  margin-left: 6px;
+  align-items: center;
+  vertical-align: middle;
+}
+.qty-adjust .mini {
+  width: 18px;
+  height: 18px;
+  font-size: 0.75rem;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Inventory Item Edit Panels */
+.inventory-edit-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+.item-edit-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--bg);
+  border: 1px solid var(--rule);
+  padding: 6px 10px;
+  border-radius: 6px;
+}
+.item-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+.item-name {
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--ink);
+}
+.item-badge {
+  font-size: 0.65rem;
+  padding: 2px 6px;
+  border-radius: 12px;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.badge-general { background: #e5e7eb; color: #374151; border: 1px solid #d1d5db; }
+.badge-weapon { background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; }
+.badge-armor { background: #dbeafe; color: #1e40af; border: 1px solid #bfdbfe; }
+.badge-shield { background: #fef3c7; color: #92400e; border: 1px solid #fde68a; }
+.badge-spellbook { background: #faf5ff; color: #6b21a8; border: 1px solid #e9d5ff; }
+
+.item-slots-badge {
+  font-size: 0.7rem;
+  color: var(--ink-soft);
+  white-space: nowrap;
+  background: var(--paper);
+  padding: 1px 5px;
+  border-radius: 4px;
+  border: 1px solid var(--rule);
+}
+.item-actions {
+  display: flex;
+  gap: 4px;
+}
+
+/* Modal Dialog */
+.modal-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(5px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+}
+.modal-overlay.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+.modal-content {
+  background: var(--paper);
+  border: 2px solid var(--rule-dk);
+  border-radius: 12px;
+  width: 90%;
+  max-width: 420px;
+  padding: 20px;
+  box-shadow: 0 10px 30px rgba(63, 42, 31, 0.25);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  transform: scale(0.95);
+  transition: transform 0.2s ease;
+}
+.modal-overlay.active .modal-content {
+  transform: scale(1);
+}
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 2px solid var(--rule);
+  padding-bottom: 8px;
+}
+.modal-title {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: var(--accent);
+  letter-spacing: 0.5px;
+}
+.modal-close {
+  background: transparent;
+  border: 0;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: var(--ink-soft);
+  line-height: 1;
+  padding: 0;
+}
+.modal-close:hover {
+  color: var(--bad);
+}
+.modal-body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.form-group label {
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: var(--ink-soft);
+  letter-spacing: 0.5px;
+}
+.form-group input, .form-group select {
+  padding: 6px 10px;
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+  background: var(--paper);
+  color: var(--ink);
+  font: inherit;
+}
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.checkbox-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+}
+.checkbox-group input {
+  accent-color: var(--accent);
+  cursor: pointer;
+  width: 16px;
+  height: 16px;
+}
+.checkbox-group label {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--ink-soft);
+  cursor: pointer;
+}
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  border-top: 1px solid var(--rule);
+  padding-top: 12px;
+  margin-top: 6px;
+}
+.modal-footer button {
+  padding: 7px 18px;
+  border-radius: 6px;
+  font-weight: 700;
+  cursor: pointer;
+  font: inherit;
+}
+.btn-cancel {
+  background: transparent;
+  border: 1px solid var(--rule-dk);
+  color: var(--ink);
+}
+.btn-cancel:hover {
+  background: var(--bg);
+}
+.btn-save {
+  background: var(--accent);
+  border: 1px solid var(--ink);
+  color: var(--bg);
+}
+.btn-save:hover {
+  background: var(--ink);
+}
+

@@ -28,12 +28,11 @@
     // even if the SDK is slow / blocked / absent.
     initOBR({
       onPlayerListChange: () => {
-        // Re-render handled inside ui.js via state subscription;
-        // also re-render tabs by dispatching a no-op state update.
-        // Simplest: trigger a re-render by importing & calling.
-        import('./src/ui.js'); // (mount() already subscribed)
+        import('./src/ui.js').then(mod => mod.render());
       },
-      onViewChange: () => {}
+      onViewChange: () => {
+        import('./src/ui.js').then(mod => mod.render());
+      }
     }).catch(err => console.warn('OBR init failed (running standalone)', err));
   </script>
 </body>

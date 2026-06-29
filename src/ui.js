@@ -16,7 +16,7 @@
 //                        edit name/level/xp, add extra inventory rows
 // ============================================================
 import {
-  ABILITIES, CAREERS, WEAPONS, BODY_ARMORS, SHIELDS, careerById
+  ABILITIES, CAREERS, WEAPONS, BODY_ARMORS, SHIELDS, careerById, COIN_TYPES
 } from './data.js';
 import { getState, setState, subscribe, replaceState, emptyCharacter } from './state.js';
 import { slotCapacity, slotsUsed, damageReduction, shieldMaxHP, inventoryRows } from './compute.js';
@@ -24,6 +24,7 @@ import { obrAvailable, getParty, getRole, getCurrentPlayerId, getViewingPlayerId
 
 let editMode = false;
 let toastTimer = null;
+let editingItemId = null; // Track item being edited in modal (null = adding new)
 
 // ----- mount -----
 export function mount(root) {
@@ -96,7 +97,14 @@ export function mount(root) {
 
           <div class="panel">
             <div class="panel-title">COINS</div>
-            <input id="f-coins" type="number" class="coins-input" />
+            <div class="coins-grid">
+              ${COIN_TYPES.map(c => `
+                <div class="coin-cell">
+                  <label style="color: ${c.color}">${c.label.split(' ')[0].toUpperCase()}</label>
+                  <input id="f-coins-${c.key}" type="number" min="0" class="coin-input" />
+                </div>
+              `).join('')}
+            </div>
           </div>
         </div>
 
@@ -143,32 +151,10 @@ export function mount(root) {
           </div>
         </div>
 
-        <div class="panel">
-          <div class="panel-title">UNIVERSAL BASICS</div>
-          <div id="basics-list" class="checkbox-grid"></div>
-        </div>
-
-        <div class="panel">
-          <div class="panel-title">ARMOR &amp; SHIELDS</div>
-          <div id="armor-list"  class="checkbox-grid"></div>
-          <div id="shield-list" class="checkbox-grid"></div>
-        </div>
-
-        <div class="panel">
-          <div class="panel-title">WEAPONS</div>
-          <div id="weapons-list" class="checkbox-grid"></div>
-        </div>
-
-        <div class="panel">
-          <div class="panel-title">SPELLBOOKS</div>
-          <div id="spells-edit"></div>
-          <button id="add-spell" class="ghost">+ Add spellbook</button>
-        </div>
-
-        <div class="panel">
-          <div class="panel-title">EXTRA ITEMS</div>
-          <div id="extra-edit"></div>
-          <button id="add-extra" class="ghost">+ Add item</button>
+        <div class="panel" style="grid-column: 1 / -1;">
+          <div class="panel-title">INVENTORY ITEMS</div>
+          <div id="inventory-edit-list" class="inventory-edit-list"></div>
+          <button id="add-item-btn" class="ghost" style="margin-top: 8px;">+ Add Item</button>
         </div>
 
         <div class="panel">
@@ -197,6 +183,76 @@ export function mount(root) {
       </div>
 
       <div id="toast" class="toast" hidden></div>
+
+      <!-- ITEM MODAL -->
+      <div id="item-modal" class="modal-overlay">
+        <div class="modal-content">
+          <div class="modal-header">
+            <span id="modal-title" class="modal-title">Add Item</span>
+            <button id="modal-close-btn" class="modal-close">&times;</button>
+          </div>
+          <div class="modal-body">
+            <div class="form-group">
+              <label for="m-item-name">NAME</label>
+              <input id="m-item-name" type="text" placeholder="e.g. Torch, Sword, Rope, etc." />
+            </div>
+            
+            <div class="form-row">
+              <div class="form-group">
+                <label for="m-item-kind">KIND</label>
+                <select id="m-item-kind">
+                  <option value="general">Gear / General</option>
+                  <option value="weapon">Weapon</option>
+                  <option value="armor">Armor</option>
+                  <option value="shield">Shield</option>
+                  <option value="spellbook">Spellbook</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="m-item-slots">SLOTS</label>
+                <input id="m-item-slots" type="number" min="0" value="1" />
+              </div>
+            </div>
+
+            <!-- Dynamic kind-specific fields -->
+            <div id="m-weapon-fields" class="form-group" hidden>
+              <label for="m-weapon-dmg">DAMAGE</label>
+              <input id="m-weapon-dmg" type="text" placeholder="e.g. d6, d8" value="d6" />
+            </div>
+
+            <div id="m-armor-fields" class="form-group" hidden>
+              <label for="m-armor-dr">DAMAGE REDUCTION (DR)</label>
+              <input id="m-armor-dr" type="number" min="0" value="1" />
+            </div>
+
+            <div id="m-shield-fields" class="form-group" hidden>
+              <label for="m-shield-max-hp">SHIELD MAX HP</label>
+              <input id="m-shield-max-hp" type="number" min="1" value="3" />
+            </div>
+
+            <!-- Quantity fields -->
+            <div class="checkbox-group">
+              <input id="m-has-quantity" type="checkbox" />
+              <label for="m-has-quantity">Track Quantity (e.g. Rope, Quiver)</label>
+            </div>
+
+            <div id="m-quantity-fields" class="form-row" hidden>
+              <div class="form-group">
+                <label for="m-item-max-qty">MAX QUANTITY</label>
+                <input id="m-item-max-qty" type="number" min="1" value="20" />
+              </div>
+              <div class="form-group">
+                <label for="m-item-unit">UNIT</label>
+                <input id="m-item-unit" type="text" placeholder="e.g. ft, arrows, uses" value="uses" />
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button id="modal-cancel-btn" class="btn-cancel">Cancel</button>
+            <button id="modal-save-btn" class="btn-save">Save</button>
+          </div>
+        </div>
+      </div>
     </div>
   `;
 
@@ -207,7 +263,7 @@ export function mount(root) {
 }
 
 // ----- render -----
-function render() {
+export function render() {
   const s = getState();
   const ro = obrAvailable() && !isViewingOwn();
 
@@ -226,13 +282,31 @@ function render() {
   // defense
   const dr = damageReduction(s);
   $('#dr-readout').textContent = dr;
-  $('#shield-hp-cur').textContent = s.shieldHP;
-  $('#shield-hp-max').textContent = shieldMaxHP(s);
+
+  const maxShield = shieldMaxHP(s);
+  const shieldHpSpan = $('.shield-hp');
+  if (maxShield === 0) {
+    shieldHpSpan.innerHTML = `<span class="dim">No Shield</span>`;
+  } else {
+    shieldHpSpan.innerHTML = `
+      <button id="shield-minus" class="mini" ${ro?'disabled':''}>−</button>
+      <span id="shield-hp-cur">${s.shieldHP}</span>
+      <span class="dim">/ <span id="shield-hp-max">${maxShield}</span></span>
+      <button id="shield-plus" class="mini" ${ro?'disabled':''}>+</button>
+    `;
+    $('#shield-minus').onclick = () => setState(st => { st.shieldHP = Math.max(0, st.shieldHP - 1); return st; });
+    $('#shield-plus').onclick  = () => setState(st => { st.shieldHP = Math.min(shieldMaxHP(st), st.shieldHP + 1); return st; });
+  }
 
   // hp + coins + portrait + motivation + gender + notes
   $('#f-hp-cur').value = s.hp.current;
   $('#f-hp-max').value = s.hp.max;
-  $('#f-coins').value = s.coins;
+  
+  COIN_TYPES.forEach(c => {
+    const el = $(`#f-coins-${c.key}`);
+    if (el) el.value = (s.coins && s.coins[c.key]) || 0;
+  });
+
   $('#f-motivation').value = s.motivation;
   $('#f-gender').value = s.gender;
   $('#f-notes').value = s.notes;
@@ -294,38 +368,105 @@ function renderSlots(s) {
     `${used} / ${cap}${used > cap ? '  ⚠ OVER' : ''}`;
   $('#slots-readout').classList.toggle('over', used > cap);
 
-  // Render `cap` numbered slot rows. Fill them with rows in order;
-  // overflow rows render below as "over capacity" red bars.
-  let html = '';
-  let cursor = 0;
-  // expand rows so a 2-slot item occupies 2 slot lines
   const flat = [];
   for (const r of rows) {
-    for (let i = 0; i < (r.slots || 1); i++) {
-      flat.push({ ...r, isCont: i > 0 });
+    if (r.slots > 1) {
+      for (let i = 0; i < r.slots; i++) {
+        flat.push({ ...r, slotIndex: i + 1, totalSlots: r.slots });
+      }
+    } else {
+      flat.push({ ...r, slotIndex: 0, totalSlots: 1 });
     }
   }
+
+  let html = '';
+  const ro = obrAvailable() && !isViewingOwn();
 
   for (let i = 0; i < Math.max(cap, flat.length); i++) {
     const r = flat[i];
     const over = i >= cap;
-    const label = r
-      ? `${r.name}${r.isCont ? ' (cont.)' : ''} <span class="dim">— ${r.source}</span>`
-      : '<span class="dim">— empty —</span>';
+    let label = '';
+    
+    if (r) {
+      let displayName = r.name || '(unnamed)';
+      if (r.totalSlots > 1) {
+        displayName += ` #${r.slotIndex}`;
+      }
+
+      let details = '';
+      if (r.kind === 'weapon' && r.dmg) {
+        details += ` (${r.dmg})`;
+      } else if (r.kind === 'armor' && r.dr) {
+        details += ` (DR +${r.dr})`;
+      } else if (r.kind === 'shield' && r.shieldMaxHP) {
+        details += ` (Shield HP ${r.shieldMaxHP})`;
+      }
+
+      let qtyStr = '';
+      let qtyButtons = '';
+      if (r.maxQuantity !== undefined && r.maxQuantity !== null) {
+        qtyStr = ` (${r.quantity}/${r.maxQuantity}${r.unit ? ' ' + r.unit : ''})`;
+        if (!ro && r.id) {
+          qtyButtons = `
+            <span class="qty-adjust" data-id="${r.id}">
+              <button class="mini qty-minus" title="Reduce quantity">−</button>
+              <button class="mini qty-plus" title="Increase quantity">+</button>
+            </span>
+          `;
+        }
+      }
+
+      label = `${displayName}${details}${qtyStr} ${qtyButtons} <span class="dim">— ${r.source}</span>`;
+    } else {
+      label = '<span class="dim">— empty —</span>';
+    }
+
     html += `
       <div class="slot-row ${over?'over':''}">
         <div class="slot-num">${i+1}</div>
         <div class="slot-name">${label}</div>
       </div>`;
   }
-  $('#slots-list').innerHTML = html;
+
+  const root = $('#slots-list');
+  root.innerHTML = html;
+
+  if (!ro) {
+    root.querySelectorAll('.qty-minus').forEach(btn => {
+      btn.onclick = (e) => {
+        e.stopPropagation();
+        const itemId = btn.closest('.qty-adjust').dataset.id;
+        setState(st => {
+          const item = st.items.find(x => x.id === itemId);
+          if (item) {
+            item.quantity = Math.max(0, item.quantity - 1);
+          }
+          return st;
+        });
+      };
+    });
+    root.querySelectorAll('.qty-plus').forEach(btn => {
+      btn.onclick = (e) => {
+        e.stopPropagation();
+        const itemId = btn.closest('.qty-adjust').dataset.id;
+        setState(st => {
+          const item = st.items.find(x => x.id === itemId);
+          if (item && item.maxQuantity) {
+            item.quantity = Math.min(item.maxQuantity, item.quantity + 1);
+          }
+          return st;
+        });
+      };
+    });
+  }
 }
 
 function renderSpellsPlay(s) {
   const panel = $('#spells-panel');
-  panel.hidden = s.spells.length === 0;
-  $('#spells-list').innerHTML = s.spells.length
-    ? s.spells.map(name => `<div class="spell-row">📖 ${escapeHtml(name)}</div>`).join('')
+  const spells = s.items.filter(item => item.kind === 'spellbook');
+  panel.hidden = spells.length === 0;
+  $('#spells-list').innerHTML = spells.length
+    ? spells.map(item => `<div class="spell-row">📖 ${escapeHtml(item.name)}</div>`).join('')
     : '<div class="dim">No spellbooks.</div>';
 }
 
@@ -347,101 +488,47 @@ function renderEditPanels(s) {
     };
   });
 
-  // basics
-  $('#basics-list').innerHTML = Object.entries({
-    rations:'2 Rations (2 sl)', rope:"50' Rope (1 sl)",
-    torches:'2 Torches (2 sl)', quiver:'Quiver, 20 arrows (1 sl)'
-  }).map(([k,label]) => checkbox(`basic-${k}`, label, s.basics[k])).join('');
-  Object.keys(s.basics).forEach(k => {
-    const el = document.getElementById(`basic-${k}`);
-    if (el) el.onchange = () => setState(st => { st.basics[k] = el.checked; return st; });
-  });
+  // Unified items list
+  const root = $('#inventory-edit-list');
+  if (root) {
+    if (!s.items || s.items.length === 0) {
+      root.innerHTML = '<div class="dim" style="text-align: center; padding: 12px;">No items in inventory. Click "+ Add Item" below.</div>';
+    } else {
+      root.innerHTML = s.items.map(item => {
+        let badgeClass = `badge-${item.kind || 'general'}`;
+        let label = item.kind === 'spellbook' ? 'Spell' : (item.kind || 'general');
+        return `
+          <div class="item-edit-row">
+            <div class="item-info">
+              <span class="item-name">${escapeHtml(item.name || '(unnamed)')}</span>
+              <span class="item-badge ${badgeClass}">${escapeHtml(label)}</span>
+              <span class="item-slots-badge">${item.slots || 1} sl</span>
+            </div>
+            <div class="item-actions">
+              <button class="mini edit-item-btn" data-id="${item.id}" title="Edit item">✎</button>
+              <button class="mini danger delete-item-btn" data-id="${item.id}" title="Delete item">×</button>
+            </div>
+          </div>
+        `;
+      }).join('');
 
-  // armor
-  $('#armor-list').innerHTML = BODY_ARMORS.map(a =>
-    checkbox(`armor-${a.id}`, `${a.name} (${a.slots} sl, +${a.dr} DR)`, s.armor[a.id])
-  ).join('');
-  BODY_ARMORS.forEach(a => {
-    const el = document.getElementById(`armor-${a.id}`);
-    if (el) el.onchange = () => setState(st => { st.armor[a.id] = el.checked; return st; });
-  });
-
-  // shields
-  $('#shield-list').innerHTML = SHIELDS.map(sh =>
-    checkbox(`shield-${sh.id}`, `${sh.name} (${sh.slots} sl, ${sh.shieldHP} HP)`, s.shield[sh.id])
-  ).join('');
-  SHIELDS.forEach(sh => {
-    const el = document.getElementById(`shield-${sh.id}`);
-    if (el) el.onchange = () => setState(st => {
-      st.shield[sh.id] = el.checked;
-      // top up shield HP to max if newly equipped
-      const max = (sh.id === 'large' && st.shield.large) ? 3
-                : (sh.id === 'small' && st.shield.small) ? Math.max(st.shieldHP, 1)
-                : st.shieldHP;
-      st.shieldHP = Math.min(max, shieldMaxHP({ ...st }));
-      return st;
-    });
-  });
-
-  // weapons
-  $('#weapons-list').innerHTML = WEAPONS.map(w =>
-    checkbox(`weapon-${w.id}`, `${w.name} (${w.dmg}, ${w.slots} sl)`, !!s.weapons[w.id])
-  ).join('');
-  WEAPONS.forEach(w => {
-    const el = document.getElementById(`weapon-${w.id}`);
-    if (el) el.onchange = () => setState(st => {
-      if (el.checked) st.weapons[w.id] = true;
-      else delete st.weapons[w.id];
-      return st;
-    });
-  });
-
-  // spells (editable)
-  $('#spells-edit').innerHTML = s.spells.map((name, i) => `
-    <div class="row-edit">
-      <input data-spell-idx="${i}" value="${escapeAttr(name)}" />
-      <button data-spell-del="${i}" class="mini danger">×</button>
-    </div>`).join('');
-  $('#spells-edit').querySelectorAll('input[data-spell-idx]').forEach(inp => {
-    inp.oninput = () => setState(st => {
-      st.spells[+inp.dataset.spellIdx] = inp.value;
-      return st;
-    });
-  });
-  $('#spells-edit').querySelectorAll('button[data-spell-del]').forEach(btn => {
-    btn.onclick = () => setState(st => {
-      st.spells.splice(+btn.dataset.spellDel, 1);
-      return st;
-    });
-  });
-
-  // extra items
-  $('#extra-edit').innerHTML = s.extraItems.map(row => `
-    <div class="row-edit">
-      <input data-extra-name="${row.id}" value="${escapeAttr(row.name)}" placeholder="item name"/>
-      <input data-extra-slots="${row.id}" type="number" min="0" value="${row.slots}" class="num"/>
-      <button data-extra-del="${row.id}" class="mini danger">×</button>
-    </div>`).join('');
-  $('#extra-edit').querySelectorAll('input[data-extra-name]').forEach(inp => {
-    inp.oninput = () => setState(st => {
-      const r = st.extraItems.find(x => x.id === inp.dataset.extraName);
-      if (r) r.name = inp.value;
-      return st;
-    });
-  });
-  $('#extra-edit').querySelectorAll('input[data-extra-slots]').forEach(inp => {
-    inp.oninput = () => setState(st => {
-      const r = st.extraItems.find(x => x.id === inp.dataset.extraSlots);
-      if (r) r.slots = Number(inp.value) || 0;
-      return st;
-    });
-  });
-  $('#extra-edit').querySelectorAll('button[data-extra-del]').forEach(btn => {
-    btn.onclick = () => setState(st => {
-      st.extraItems = st.extraItems.filter(x => x.id !== btn.dataset.extraDel);
-      return st;
-    });
-  });
+      root.querySelectorAll('.edit-item-btn').forEach(btn => {
+        btn.onclick = () => {
+          openItemModal(btn.dataset.id);
+        };
+      });
+      root.querySelectorAll('.delete-item-btn').forEach(btn => {
+        btn.onclick = () => {
+          if (confirm('Delete this item?')) {
+            setState(st => {
+              st.items = st.items.filter(x => x.id !== btn.dataset.id);
+              return st;
+            });
+          }
+        };
+      });
+    }
+  }
 }
 
 function renderGmTabs() {
@@ -461,6 +548,152 @@ function renderGmTabs() {
   });
 }
 
+function openItemModal(itemId = null) {
+  editingItemId = itemId;
+  const modal = $('#item-modal');
+  const titleEl = $('#modal-title');
+  
+  const nameInput = $('#m-item-name');
+  const kindSelect = $('#m-item-kind');
+  const slotsInput = $('#m-item-slots');
+  const weaponDmgInput = $('#m-weapon-dmg');
+  const armorDrInput = $('#m-armor-dr');
+  const shieldMaxHPInput = $('#m-shield-max-hp');
+  const hasQtyCheckbox = $('#m-has-quantity');
+  const maxQtyInput = $('#m-item-max-qty');
+  const unitInput = $('#m-item-unit');
+
+  if (itemId) {
+    titleEl.textContent = 'Edit Item';
+    const item = getState().items.find(x => x.id === itemId);
+    if (item) {
+      nameInput.value = item.name || '';
+      kindSelect.value = item.kind || 'general';
+      slotsInput.value = item.slots ?? 1;
+      weaponDmgInput.value = item.dmg || 'd6';
+      armorDrInput.value = item.dr ?? 1;
+      shieldMaxHPInput.value = item.shieldMaxHP ?? 3;
+      
+      const hasQty = item.maxQuantity !== undefined && item.maxQuantity !== null;
+      hasQtyCheckbox.checked = hasQty;
+      maxQtyInput.value = item.maxQuantity ?? 20;
+      unitInput.value = item.unit || 'uses';
+    }
+  } else {
+    titleEl.textContent = 'Add Item';
+    nameInput.value = '';
+    kindSelect.value = 'general';
+    slotsInput.value = 1;
+    weaponDmgInput.value = 'd6';
+    armorDrInput.value = 1;
+    shieldMaxHPInput.value = 3;
+    hasQtyCheckbox.checked = false;
+    maxQtyInput.value = 20;
+    unitInput.value = 'uses';
+  }
+
+  updateModalFields();
+  modal.classList.add('active');
+}
+
+function updateModalFields() {
+  const kind = $('#m-item-kind').value;
+  const hasQty = $('#m-has-quantity').checked;
+  
+  $('#m-weapon-fields').hidden = kind !== 'weapon';
+  $('#m-armor-fields').hidden = kind !== 'armor';
+  $('#m-shield-fields').hidden = kind !== 'shield';
+  $('#m-quantity-fields').hidden = !hasQty;
+}
+
+function handleKindChange() {
+  const kind = $('#m-item-kind').value;
+  const slotsInput = $('#m-item-slots');
+  if (!editingItemId) {
+    if (kind === 'armor') {
+      slotsInput.value = 2;
+    } else {
+      slotsInput.value = 1;
+    }
+  }
+  updateModalFields();
+}
+
+function wireModalHandlers() {
+  const modal = $('#item-modal');
+  const closeBtn = $('#modal-close-btn');
+  const cancelBtn = $('#modal-cancel-btn');
+  const saveBtn = $('#modal-save-btn');
+  const kindSelect = $('#m-item-kind');
+  const hasQtyCheckbox = $('#m-has-quantity');
+
+  const closeModal = () => {
+    modal.classList.remove('active');
+  };
+
+  closeBtn.onclick = closeModal;
+  cancelBtn.onclick = closeModal;
+  
+  kindSelect.onchange = handleKindChange;
+  hasQtyCheckbox.onchange = updateModalFields;
+
+  saveBtn.onclick = () => {
+    const name = $('#m-item-name').value.trim();
+    const kind = kindSelect.value;
+    const slots = Number($('#m-item-slots').value) || 0;
+    
+    if (!name) {
+      alert('Please enter an item name.');
+      return;
+    }
+
+    const updatedItem = {
+      id: editingItemId || crypto.randomUUID(),
+      name,
+      kind,
+      slots
+    };
+
+    if (kind === 'weapon') {
+      updatedItem.dmg = $('#m-weapon-dmg').value.trim() || 'd6';
+    } else if (kind === 'armor') {
+      updatedItem.dr = Number($('#m-armor-dr').value) || 0;
+    } else if (kind === 'shield') {
+      updatedItem.shieldMaxHP = Number($('#m-shield-max-hp').value) || 1;
+    }
+
+    if ($('#m-has-quantity').checked) {
+      const maxQty = Number($('#m-item-max-qty').value) || 1;
+      const unit = $('#m-item-unit').value.trim();
+      updatedItem.maxQuantity = maxQty;
+      updatedItem.unit = unit;
+      
+      if (editingItemId) {
+        const oldItem = getState().items.find(x => x.id === editingItemId);
+        updatedItem.quantity = oldItem && oldItem.quantity !== undefined
+          ? Math.min(oldItem.quantity, maxQty)
+          : maxQty;
+      } else {
+        updatedItem.quantity = maxQty;
+      }
+    }
+
+    setState(st => {
+      if (editingItemId) {
+        st.items = st.items.map(x => x.id === editingItemId ? updatedItem : x);
+      } else {
+        st.items.push(updatedItem);
+        if (kind === 'shield') {
+          st.shieldHP = shieldMaxHP(st);
+        }
+      }
+      return st;
+    });
+
+    closeModal();
+  };
+}
+
 // ----- static handlers (wired once at mount) -----
 function wireStaticHandlers() {
   // header inputs
@@ -471,9 +704,16 @@ function wireStaticHandlers() {
   bindText('#f-gender',     (v, st) => st.gender = v);
   bindText('#f-portrait',   (v, st) => st.portrait = v);
   bindText('#f-notes',      (v, st) => st.notes = v);
-  bindNum ('#f-coins',      (v, st) => st.coins = v);
   bindNum ('#f-hp-cur',     (v, st) => st.hp.current = v);
   bindNum ('#f-hp-max',     (v, st) => st.hp.max = v);
+
+  // Coins fields
+  COIN_TYPES.forEach(c => {
+    bindNum(`#f-coins-${c.key}`, (v, st) => {
+      if (!st.coins) st.coins = {};
+      st.coins[c.key] = v;
+    });
+  });
 
   // morale dial
   document.querySelectorAll('.morale-btn').forEach(b => {
@@ -486,13 +726,6 @@ function wireStaticHandlers() {
   // HP +/- shortcuts
   $('#hp-minus').onclick = () => setState(st => { st.hp.current = Math.max(0, st.hp.current - 1); return st; });
   $('#hp-plus').onclick  = () => setState(st => { st.hp.current = Math.min(st.hp.max, st.hp.current + 1); return st; });
-
-  // Shield HP +/-
-  $('#shield-minus').onclick = () => setState(st => { st.shieldHP = Math.max(0, st.shieldHP - 1); return st; });
-  $('#shield-plus').onclick  = () => setState(st => {
-    st.shieldHP = Math.min(shieldMaxHP(st), st.shieldHP + 1);
-    return st;
-  });
 
   // Edit toggle
   $('#btn-edit').onclick = () => { editMode = !editMode; render(); };
@@ -507,12 +740,12 @@ function wireStaticHandlers() {
     }
   };
 
-  // Edit-mode "add" buttons
-  $('#add-spell').onclick = () => setState(st => { st.spells.push('New Spellbook'); return st; });
-  $('#add-extra').onclick = () => setState(st => {
-    st.extraItems.push({ id: crypto.randomUUID(), name: '', slots: 1 });
-    return st;
-  });
+  // Add Item button
+  const addItemBtn = $('#add-item-btn');
+  if (addItemBtn) addItemBtn.onclick = () => openItemModal();
+
+  // Wire Modal handlers
+  wireModalHandlers();
 }
 
 function toggleReadonly(ro) {

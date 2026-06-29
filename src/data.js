@@ -146,3 +146,9 @@ export const careerById = (id) => CAREERS.find(c => c.id === id);
 export const weaponById = (id) => WEAPONS.find(w => w.id === id);
 export const armorById  = (id) => BODY_ARMORS.find(a => a.id === id);
 export const shieldById = (id) => SHIELDS.find(s => s.id === id);
+
+export const COIN_TYPES = [
+  { key: 'gp', label: 'Gold (gp)', color: '#d4af37' },
+  { key: 'sp', label: 'Silver (sp)', color: '#a0a0a0' },
+  { key: 'cp', label: 'Copper (cp)', color: '#cd7f32' }
+];

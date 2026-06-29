@@ -7,8 +7,11 @@
 //    (see obr.js); localStorage is just the local fallback.
 // ============================================================
 
-const STORAGE_KEY = 'knave-sheet:v1';
-const SCHEMA_VERSION = 1;
+import { weaponById } from './data.js';
+
+const STORAGE_KEY = 'knave-sheet:v2';
+const SCHEMA_VERSION = 2;
+
 
 // ----- factory -----
 export function emptyCharacter() {
@@ -23,20 +26,12 @@ export function emptyCharacter() {
     morale: 0,                  // -3 .. +3
     abilities: { str: 0, dex: 0, con: 0, int: 0, wis: 0, cha: 0 },
     hp:  { current: 4, max: 4 },
-    coins: 0,
+    coins: { gp: 0, sp: 0, cp: 0 },
     careers: [],                // array of career ids (numbers)
-    armor:  { head: false, torso: false, limbs: false },
-    shield: { small: false, large: false },
-    shieldHP: 0,                // current shield HP (drops as it absorbs hits)
-    weapons: {},                // { weaponId: true }
-    basics: {                   // universal starter gear
-      rations: true, rope: true, torches: true, quiver: true
-    },
-    spells: [],                 // ["Blazing Whisper of Ash" ...]
-    // Free-form inventory rows the player adds by hand.
-    // Each row is { id, name, slots }. Persisted as-is.
-    extraItems: [],
-    notes: ''
+    items: [],                  // unified array of items
+    notes: '',
+    portrait: '',
+    shieldHP: 0                 // current shield HP
   };
 }
 
@@ -87,17 +82,182 @@ export function replaceState(obj) {
 // Forward-compatible: fill in any keys missing from older saves.
 function migrate(obj) {
   const fresh = emptyCharacter();
-  // shallow merge top level, deep merge known nested objects
+  if (!obj) return fresh;
+
+  // If already migrated or schema 2, shallow merge & merge sub-objects
+  if (obj._schema === 2) {
+    const merged = { ...fresh, ...obj };
+    merged.abilities = { ...fresh.abilities, ...(obj.abilities || {}) };
+    merged.hp        = { ...fresh.hp,        ...(obj.hp        || {}) };
+    merged.coins     = { ...fresh.coins,     ...(obj.coins     || {}) };
+    merged.items     = Array.isArray(obj.items) ? obj.items : [];
+    merged.careers   = Array.isArray(obj.careers) ? obj.careers : [];
+    return merged;
+  }
+
+  // Schema v1 -> v2 Migration
   const merged = { ...fresh, ...obj };
   merged.abilities = { ...fresh.abilities, ...(obj.abilities || {}) };
   merged.hp        = { ...fresh.hp,        ...(obj.hp        || {}) };
-  merged.armor     = { ...fresh.armor,     ...(obj.armor     || {}) };
-  merged.shield    = { ...fresh.shield,    ...(obj.shield    || {}) };
-  merged.basics    = { ...fresh.basics,    ...(obj.basics    || {}) };
-  merged.weapons   = { ...(obj.weapons || {}) };
-  merged.careers   = Array.isArray(obj.careers)    ? obj.careers    : [];
-  merged.spells    = Array.isArray(obj.spells)     ? obj.spells     : [];
-  merged.extraItems= Array.isArray(obj.extraItems) ? obj.extraItems : [];
-  merged._schema   = SCHEMA_VERSION;
+  merged.careers   = Array.isArray(obj.careers) ? obj.careers : [];
+  
+  // 1. Coins migration
+  if (typeof obj.coins === 'number') {
+    merged.coins = { gp: 0, sp: 0, cp: obj.coins };
+  } else if (obj.coins) {
+    merged.coins = { gp: 0, sp: 0, cp: 0, ...obj.coins };
+  } else {
+    merged.coins = { gp: 0, sp: 0, cp: 0 };
+  }
+
+  // 2. Inventory migration
+  const items = [];
+
+  // Basics
+  if (obj.basics) {
+    if (obj.basics.rations) {
+      items.push({
+        id: crypto.randomUUID(),
+        name: 'Rations',
+        slots: 2,
+        kind: 'general'
+      });
+    }
+    if (obj.basics.rope) {
+      items.push({
+        id: crypto.randomUUID(),
+        name: 'Rope',
+        slots: 1,
+        kind: 'general',
+        quantity: 50,
+        maxQuantity: 50,
+        unit: 'ft'
+      });
+    }
+    if (obj.basics.torches) {
+      // 2 Torches in separate slots
+      items.push({
+        id: crypto.randomUUID(),
+        name: 'Torch',
+        slots: 1,
+        kind: 'general'
+      });
+      items.push({
+        id: crypto.randomUUID(),
+        name: 'Torch',
+        slots: 1,
+        kind: 'general'
+      });
+    }
+    if (obj.basics.quiver) {
+      items.push({
+        id: crypto.randomUUID(),
+        name: 'Quiver',
+        slots: 1,
+        kind: 'general',
+        quantity: 20,
+        maxQuantity: 20,
+        unit: 'arrows'
+      });
+    }
+  }
+
+  // Armor
+  if (obj.armor) {
+    if (obj.armor.head) {
+      items.push({
+        id: crypto.randomUUID(),
+        name: 'Head Armor',
+        slots: 2,
+        kind: 'armor',
+        dr: 1
+      });
+    }
+    if (obj.armor.torso) {
+      items.push({
+        id: crypto.randomUUID(),
+        name: 'Torso Armor',
+        slots: 2,
+        kind: 'armor',
+        dr: 1
+      });
+    }
+    if (obj.armor.limbs) {
+      items.push({
+        id: crypto.randomUUID(),
+        name: 'Limbs Armor',
+        slots: 2,
+        kind: 'armor',
+        dr: 1
+      });
+    }
+  }
+
+  // Shield
+  if (obj.shield) {
+    if (obj.shield.small) {
+      items.push({
+        id: crypto.randomUUID(),
+        name: 'Small Shield',
+        slots: 1,
+        kind: 'shield',
+        shieldMaxHP: 1
+      });
+    }
+    if (obj.shield.large) {
+      items.push({
+        id: crypto.randomUUID(),
+        name: 'Large Shield',
+        slots: 2,
+        kind: 'shield',
+        shieldMaxHP: 3
+      });
+    }
+  }
+
+  // Weapons
+  if (obj.weapons) {
+    for (const wId of Object.keys(obj.weapons)) {
+      if (obj.weapons[wId]) {
+        const w = weaponById(wId);
+        if (w) {
+          items.push({
+            id: crypto.randomUUID(),
+            name: w.name,
+            slots: w.slots || 1,
+            kind: 'weapon',
+            dmg: w.dmg || 'd6'
+          });
+        }
+      }
+    }
+  }
+
+  // Spells
+  if (Array.isArray(obj.spells)) {
+    for (const sName of obj.spells) {
+      items.push({
+        id: crypto.randomUUID(),
+        name: sName,
+        slots: 1,
+        kind: 'spellbook'
+      });
+    }
+  }
+
+  // Extra items
+  if (Array.isArray(obj.extraItems)) {
+    for (const ex of obj.extraItems) {
+      items.push({
+        id: ex.id || crypto.randomUUID(),
+        name: ex.name || '',
+        slots: Number(ex.slots) || 1,
+        kind: 'general'
+      });
+    }
+  }
+
+  merged.items = items;
+  merged._schema = SCHEMA_VERSION;
   return merged;
 }
