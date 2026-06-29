@@ -815,6 +815,7 @@ button.ghost:hover { background: var(--bg); color: var(--ink); }
   align-items: center;
   gap: 4px;
   opacity: 0;
+  pointer-events: none;
   transition: opacity 0.15s ease;
   background: var(--paper);
   border-radius: 4px;
@@ -824,6 +825,7 @@ button.ghost:hover { background: var(--bg); color: var(--ink); }
 }
 .slot:hover .slot-overlay-controls {
   opacity: 1;
+  pointer-events: auto;
 }
 .slot-empty-label {
   font-weight: 600;
