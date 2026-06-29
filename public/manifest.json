@@ -4,7 +4,7 @@
   "manifest_version": 1,
   "author": "your-name-here",
   "description": "A purpose-built character sheet for Knave 2e (with morale dial, slot inventory, DR/shield HP).",
-  "homepage_url": "https://github.com/taras-tarabanov/knave-sheet",
+  "homepage_url": "https://github.com/taras-tarabanov/kritter",
   "action": {
     "title": "Knave 2e Sheet",
     "icon": "/icon.svg",
