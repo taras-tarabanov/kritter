@@ -33,7 +33,7 @@ export function damageReduction(state) {
   let dr = 0;
   if (Array.isArray(state.items)) {
     for (const item of state.items) {
-      if (item.kind === 'armor') {
+      if (item.kind === 'armor' && item.equipped) {
         dr += Number(item.dr) || 0;
       }
     }
@@ -83,7 +83,9 @@ export function inventoryRows(state) {
         unit: item.unit,
         dmg: item.dmg,
         dr: item.dr,
-        shieldMaxHP: item.shieldMaxHP
+        shieldMaxHP: item.shieldMaxHP,
+        category: item.category,
+        equipped: item.equipped
       });
     }
   }

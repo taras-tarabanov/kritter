@@ -67,65 +67,68 @@ export function mount(root) {
             <div id="abilities" class="abilities"></div>
           </div>
 
-          <div class="panel">
-            <div class="panel-title">DEFENSE</div>
-            <div class="kv-row">
-              <span>Damage Reduction</span>
-              <span id="dr-readout" class="big">0</span>
+          <div class="panel-row">
+            <div class="panel">
+              <div class="panel-title">DEFENSE</div>
+              <div class="kv-row">
+                <span>Damage Reduction</span>
+                <span id="dr-readout" class="big">0</span>
+              </div>
+              <div class="kv-row">
+                <span>Shield HP</span>
+                <span class="shield-hp">
+                  <button id="shield-minus" class="mini">−</button>
+                  <span id="shield-hp-cur">0</span>
+                  <span class="dim">/ <span id="shield-hp-max">0</span></span>
+                  <button id="shield-plus" class="mini">+</button>
+                </span>
+              </div>
             </div>
-            <div class="kv-row">
-              <span>Shield HP</span>
-              <span class="shield-hp">
-                <button id="shield-minus" class="mini">−</button>
-                <span id="shield-hp-cur">0</span>
-                <span class="dim">/ <span id="shield-hp-max">0</span></span>
-                <button id="shield-plus" class="mini">+</button>
-              </span>
-            </div>
-          </div>
 
-          <div class="panel">
-            <div class="panel-title">HIT POINTS</div>
-            <div class="hp-row">
-              <button id="hp-minus" class="mini">−</button>
-              <input id="f-hp-cur" type="number" />
-              <span class="dim">/</span>
-              <input id="f-hp-max" type="number" />
-              <button id="hp-plus" class="mini">+</button>
-            </div>
-          </div>
-
-          <div class="panel">
-            <div class="panel-title">COINS</div>
-            <div class="coins-grid">
-              ${COIN_TYPES.map(c => `
-                <div class="coin-cell">
-                  <label style="color: ${c.color}">${c.label.split(' ')[0].toUpperCase()}</label>
-                  <input id="f-coins-${c.key}" type="number" min="0" class="coin-input" />
-                </div>
-              `).join('')}
-            </div>
-          </div>
-        </div>
-
-        <!-- CENTER COLUMN -->
-        <div class="col center">
-          <div class="panel">
-            <div class="panel-title">PORTRAIT</div>
-            <div id="portrait-box" class="portrait-box">
-              <img id="portrait-img" alt="" hidden />
-              <div id="portrait-empty" class="portrait-empty">Click EDIT to set portrait</div>
+            <div class="panel">
+              <div class="panel-title">HIT POINTS</div>
+              <div class="hp-row" style="margin-top: 6px;">
+                <button id="hp-minus" class="mini">−</button>
+                <input id="f-hp-cur" type="number" />
+                <span class="dim">/</span>
+                <input id="f-hp-max" type="number" />
+                <button id="hp-plus" class="mini">+</button>
+              </div>
             </div>
           </div>
 
-          <div class="panel">
-            <div class="panel-title">MOTIVATION</div>
-            <input id="f-motivation" type="text" class="full" />
+          <div class="panel-row">
+            <div class="panel">
+              <div class="panel-title">COINS</div>
+              <div class="coins-grid">
+                ${COIN_TYPES.map(c => `
+                  <div class="coin-cell">
+                    <label style="color: ${c.color}">${c.label.split(' ')[0].toUpperCase()}</label>
+                    <input id="f-coins-${c.key}" type="number" min="0" class="coin-input" />
+                  </div>
+                `).join('')}
+              </div>
+            </div>
+
+            <div class="panel">
+              <div class="panel-title">MOTIVATION</div>
+              <input id="f-motivation" type="text" class="full" style="margin-top: 4px;" />
+            </div>
           </div>
 
-          <div class="panel" id="spells-panel">
-            <div class="panel-title">SPELLBOOKS</div>
-            <div id="spells-list" class="spells-list"></div>
+          <div class="panel-row">
+            <div class="panel">
+              <div class="panel-title">PORTRAIT</div>
+              <div id="portrait-box" class="portrait-box">
+                <img id="portrait-img" alt="" hidden />
+                <div id="portrait-empty" class="portrait-empty">Click EDIT to set portrait</div>
+              </div>
+            </div>
+
+            <div class="panel" id="spells-panel">
+              <div class="panel-title">SPELLBOOKS</div>
+              <div id="spells-list" class="spells-list"></div>
+            </div>
           </div>
         </div>
 
@@ -221,9 +224,19 @@ export function mount(root) {
               <input id="m-weapon-dmg" type="text" placeholder="e.g. d6, d8" value="d6" />
             </div>
 
-            <div id="m-armor-fields" class="form-group" hidden>
-              <label for="m-armor-dr">DAMAGE REDUCTION (DR)</label>
-              <input id="m-armor-dr" type="number" min="0" value="1" />
+            <div id="m-armor-fields" class="form-row" hidden>
+              <div class="form-group">
+                <label for="m-armor-dr">DAMAGE REDUCTION (DR)</label>
+                <input id="m-armor-dr" type="number" min="0" value="1" />
+              </div>
+              <div class="form-group">
+                <label for="m-armor-category">ARMOR CATEGORY</label>
+                <select id="m-armor-category">
+                  <option value="head">Head</option>
+                  <option value="torso" selected>Torso</option>
+                  <option value="limbs">Limbs</option>
+                </select>
+              </div>
             </div>
 
             <div id="m-shield-fields" class="form-group" hidden>
@@ -406,7 +419,7 @@ function renderSlots(s) {
       if (r.kind === 'weapon' && r.dmg) {
         details += ` (${r.dmg})`;
       } else if (r.kind === 'armor' && r.dr) {
-        details += ` (DR +${r.dr})`;
+        details += ` (DR +${r.dr} - ${r.category ? r.category.toUpperCase() : 'TORSO'})`;
       } else if (r.kind === 'shield' && r.shieldMaxHP) {
         details += ` (Shield HP ${r.shieldMaxHP})`;
       }
@@ -423,6 +436,18 @@ function renderSlots(s) {
               <button class="mini qty-minus" title="Reduce quantity">−</button>
               <button class="mini qty-plus" title="Increase quantity">+</button>
             </span>
+          `;
+        }
+      } else if (r.kind === 'armor' && r.id) {
+        const eqLabel = r.equipped ? '🛡️ Equipped' : 'Equip';
+        const eqClass = r.equipped ? 'eq-active' : 'eq-inactive';
+        if (!ro) {
+          qtyButtons = `
+            <button class="mini eq-toggle-btn ${eqClass}" data-id="${r.id}" title="Toggle equipped">${eqLabel}</button>
+          `;
+        } else {
+          qtyButtons = `
+            <span class="eq-badge ${eqClass}">${eqLabel}</span>
           `;
         }
       }
@@ -489,6 +514,29 @@ function renderSlots(s) {
           const item = st.items.find(x => x.id === itemId);
           if (item && item.maxQuantity) {
             item.quantity = Math.min(item.maxQuantity, item.quantity + 1);
+          }
+          return st;
+        });
+      };
+    });
+
+    // Equip Toggles
+    root.querySelectorAll('.eq-toggle-btn').forEach(btn => {
+      btn.onclick = (e) => {
+        e.stopPropagation();
+        const itemId = btn.dataset.id;
+        setState(st => {
+          const item = st.items.find(x => x.id === itemId);
+          if (item && item.kind === 'armor') {
+            const nextEquipped = !item.equipped;
+            if (nextEquipped) {
+              st.items.forEach(x => {
+                if (x.kind === 'armor' && x.category === item.category && x.id !== itemId) {
+                  x.equipped = false;
+                }
+              });
+            }
+            item.equipped = nextEquipped;
           }
           return st;
         });
@@ -681,6 +729,7 @@ function openItemModal(itemId = null) {
   const slotsInput = $('#m-item-slots');
   const weaponDmgInput = $('#m-weapon-dmg');
   const armorDrInput = $('#m-armor-dr');
+  const armorCategorySelect = $('#m-armor-category');
   const shieldMaxHPInput = $('#m-shield-max-hp');
   const hasQtyCheckbox = $('#m-has-quantity');
   const maxQtyInput = $('#m-item-max-qty');
@@ -698,6 +747,7 @@ function openItemModal(itemId = null) {
       slotsInput.value = item.slots ?? 1;
       weaponDmgInput.value = item.dmg || 'd6';
       armorDrInput.value = item.dr ?? 1;
+      if (armorCategorySelect) armorCategorySelect.value = item.category || 'torso';
       shieldMaxHPInput.value = item.shieldMaxHP ?? 3;
       
       const hasQty = item.maxQuantity !== undefined && item.maxQuantity !== null;
@@ -716,6 +766,7 @@ function openItemModal(itemId = null) {
     slotsInput.value = 1;
     weaponDmgInput.value = 'd6';
     armorDrInput.value = 1;
+    if (armorCategorySelect) armorCategorySelect.value = 'torso';
     shieldMaxHPInput.value = 3;
     hasQtyCheckbox.checked = false;
     maxQtyInput.value = 20;
@@ -789,6 +840,13 @@ function wireModalHandlers() {
       updatedItem.dmg = $('#m-weapon-dmg').value.trim() || 'd6';
     } else if (kind === 'armor') {
       updatedItem.dr = Number($('#m-armor-dr').value) || 0;
+      updatedItem.category = $('#m-armor-category').value;
+      if (editingItemId) {
+        const oldItem = getState().items.find(x => x.id === editingItemId);
+        updatedItem.equipped = oldItem ? !!oldItem.equipped : true;
+      } else {
+        updatedItem.equipped = true;
+      }
     } else if (kind === 'shield') {
       updatedItem.shieldMaxHP = Number($('#m-shield-max-hp').value) || 1;
     }
@@ -813,13 +871,28 @@ function wireModalHandlers() {
 
     setState(st => {
       if (editingItemId) {
+        if (updatedItem.kind === 'armor' && updatedItem.equipped) {
+          st.items.forEach(x => {
+            if (x.kind === 'armor' && x.category === updatedItem.category && x.id !== editingItemId) {
+              x.equipped = false;
+            }
+          });
+        }
         st.items = st.items.map(x => x.id === editingItemId ? updatedItem : x);
       } else {
         for (let a = 0; a < amountToAdd; a++) {
-          st.items.push({
+          const itemCopy = {
             ...updatedItem,
             id: crypto.randomUUID()
-          });
+          };
+          if (itemCopy.kind === 'armor' && itemCopy.equipped) {
+            st.items.forEach(x => {
+              if (x.kind === 'armor' && x.category === itemCopy.category) {
+                x.equipped = false;
+              }
+            });
+          }
+          st.items.push(itemCopy);
         }
         if (kind === 'shield') {
           st.shieldHP = shieldMaxHP(st);
