@@ -1,0 +1,273 @@
+/* =========================================================
+   Knave Sheet — styling
+   - Parchment + ink palette to match the chargen
+   - Three-column body that collapses to one column on narrow
+     Owlbear popovers
+   ========================================================= */
+
+:root {
+  --bg:        #f4e9d8;
+  --paper:    #fffdf6;
+  --ink:      #3f2a1f;
+  --ink-soft: #6b523f;
+  --rule:     #d4af7a;
+  --rule-dk:  #8b5e3c;
+  --accent:   #5c4033;
+  --good:     #166534;
+  --good-bg:  #d1fae5;
+  --warn:     #854d0e;
+  --warn-bg:  #fef3c7;
+  --bad:      #991b1b;
+  --bad-bg:   #fee2e2;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  padding: 10px;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-size: 14px;
+  line-height: 1.35;
+}
+
+.sheet { max-width: 1100px; margin: 0 auto; }
+
+/* ---------- GM tabs ---------- */
+.gm-tabs {
+  display: flex; flex-wrap: wrap; gap: 4px;
+  margin-bottom: 8px;
+  border-bottom: 2px solid var(--rule-dk);
+  padding-bottom: 4px;
+}
+.gm-tab {
+  background: var(--paper); border: 1px solid var(--rule-dk);
+  padding: 4px 10px; border-radius: 6px 6px 0 0;
+  font: inherit; cursor: pointer; color: var(--ink-soft);
+}
+.gm-tab.active { background: var(--accent); color: var(--bg); font-weight: 700; }
+
+/* ---------- Header ---------- */
+.header {
+  display: grid;
+  grid-template-columns: 2fr 2fr 1fr 1fr 1.2fr;
+  gap: 6px;
+  background: var(--ink); color: var(--bg);
+  padding: 6px 8px; border-radius: 8px 8px 0 0;
+}
+.hcell { display: flex; flex-direction: column; gap: 2px; }
+.hcell.wide { min-width: 0; }
+.hcell label {
+  font-size: 0.65rem; letter-spacing: 1px; opacity: 0.8;
+}
+.hcell input {
+  background: var(--paper); border: 1px solid var(--rule); color: var(--ink);
+  padding: 3px 6px; font: inherit; border-radius: 4px;
+  min-width: 0; width: 100%;
+}
+.readout {
+  background: var(--paper); border: 1px solid var(--rule); color: var(--ink);
+  padding: 3px 6px; border-radius: 4px; min-height: 1.6em;
+  font-size: 0.85rem;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+
+/* morale */
+.morale-cell .morale-dial {
+  display: flex; align-items: center; gap: 4px;
+  background: var(--paper); border-radius: 4px; padding: 1px 4px;
+}
+.morale-btn {
+  background: transparent; border: 0; color: var(--ink);
+  width: 22px; height: 22px; font-weight: 700; cursor: pointer;
+  border-radius: 4px;
+}
+.morale-btn:hover { background: var(--bg); }
+.morale-value {
+  flex: 1; text-align: center; font-weight: 800; font-size: 1.1rem;
+}
+.morale-value.pos { color: var(--good); }
+.morale-value.neg { color: var(--bad); }
+.morale-value.zero { color: var(--ink-soft); }
+
+/* ---------- Body grid ---------- */
+.body {
+  display: grid;
+  grid-template-columns: 1fr 1.1fr 1.2fr;
+  gap: 8px;
+  background: var(--paper);
+  padding: 8px;
+  border: 2px solid var(--rule-dk); border-top: none;
+  border-radius: 0 0 8px 8px;
+}
+.col { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+
+@media (max-width: 720px) {
+  .header { grid-template-columns: 1fr 1fr; }
+  .body   { grid-template-columns: 1fr; }
+}
+
+/* ---------- Panels ---------- */
+.panel {
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+  padding: 8px 10px;
+}
+.panel-title {
+  font-size: 0.7rem; font-weight: 800; letter-spacing: 1px;
+  color: var(--ink-soft); margin-bottom: 6px;
+  display: flex; justify-content: space-between; align-items: baseline;
+  border-bottom: 1px solid var(--rule); padding-bottom: 3px;
+}
+.dim { color: var(--ink-soft); font-weight: 400; }
+
+/* ---------- Abilities ---------- */
+.abilities {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 4px;
+}
+.ab {
+  display: grid; grid-template-columns: auto 1fr auto;
+  align-items: center; gap: 4px;
+  background: var(--bg); border: 1px solid var(--rule);
+  border-radius: 6px; padding: 2px 4px;
+}
+.ab-mid  { text-align: center; min-width: 0; }
+.ab-label{ font-size: 0.65rem; font-weight: 700; color: var(--ink-soft); }
+.ab-val  { font-size: 1.3rem; font-weight: 800; line-height: 1; color: var(--accent); }
+
+.mini {
+  background: var(--paper); border: 1px solid var(--rule-dk);
+  width: 22px; height: 22px; cursor: pointer; border-radius: 4px;
+  font: inherit; color: var(--ink); padding: 0; line-height: 1;
+}
+.mini:hover { background: var(--bg); }
+.mini.danger { color: var(--bad); border-color: var(--bad); }
+
+/* ---------- KV / HP rows ---------- */
+.kv-row {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 2px 0;
+}
+.big { font-size: 1.2rem; font-weight: 800; color: var(--accent); }
+
+.hp-row {
+  display: flex; align-items: center; gap: 4px; justify-content: center;
+}
+.hp-row input {
+  width: 50px; text-align: center; font-size: 1.2rem; font-weight: 800;
+  border: 1px solid var(--rule); border-radius: 4px; padding: 2px;
+  color: var(--accent); background: var(--paper);
+}
+.shield-hp { display: flex; align-items: center; gap: 3px; }
+
+.coins-input {
+  width: 100%; padding: 4px; font-size: 1rem;
+  border: 1px solid var(--rule); border-radius: 4px;
+}
+
+/* ---------- Portrait ---------- */
+.portrait-box {
+  background: var(--bg);
+  border: 1px dashed var(--rule);
+  border-radius: 6px;
+  aspect-ratio: 1 / 1;
+  display: flex; align-items: center; justify-content: center;
+  overflow: hidden;
+}
+.portrait-box img { width: 100%; height: 100%; object-fit: cover; }
+.portrait-empty {
+  font-size: 0.75rem; color: var(--ink-soft); text-align: center; padding: 12px;
+}
+
+/* ---------- Slots ---------- */
+.slots-list {
+  display: flex; flex-direction: column; gap: 1px;
+  max-height: 480px; overflow: auto;
+}
+.slot-row {
+  display: grid; grid-template-columns: 24px 1fr; gap: 6px;
+  border-bottom: 1px dotted var(--rule);
+  padding: 2px 4px;
+  font-size: 0.85rem;
+}
+.slot-num {
+  text-align: right; color: var(--ink-soft); font-weight: 700; font-size: 0.75rem;
+}
+.slot-name {
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.slot-row.over { background: var(--bad-bg); color: var(--bad); }
+#slots-readout.over { color: var(--bad); font-weight: 700; }
+
+/* ---------- Spells (play view) ---------- */
+.spell-row {
+  padding: 3px 0; border-bottom: 1px dotted var(--rule);
+  font-size: 0.85rem;
+}
+
+/* ---------- Edit panels ---------- */
+.edit-panels {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 8px;
+  margin-top: 8px;
+}
+.checkbox-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 2px 8px;
+}
+.cb { display: flex; align-items: center; gap: 5px; font-size: 0.82rem; }
+.cb input { accent-color: var(--accent); }
+
+.edit-row { display: flex; gap: 6px; }
+.edit-row select, input.full {
+  flex: 1; padding: 4px 6px; border: 1px solid var(--rule);
+  border-radius: 4px; font: inherit; background: var(--paper); color: var(--ink);
+  min-width: 0; width: 100%;
+}
+.row-edit {
+  display: flex; gap: 4px; margin-bottom: 3px; align-items: center;
+}
+.row-edit input { flex: 1; padding: 3px 5px; border: 1px solid var(--rule); border-radius: 4px; min-width: 0; }
+.row-edit input.num { flex: 0 0 50px; text-align: center; }
+
+button.ghost {
+  background: transparent; border: 1px dashed var(--rule-dk);
+  color: var(--ink-soft); padding: 4px 8px; border-radius: 4px;
+  cursor: pointer; font: inherit; width: 100%;
+}
+button.ghost:hover { background: var(--bg); color: var(--ink); }
+
+/* ---------- Notes ---------- */
+.notes-panel { margin-top: 8px; }
+.notes-panel textarea {
+  width: 100%; padding: 6px; font: inherit; line-height: 1.4;
+  border: 1px solid var(--rule); border-radius: 4px; resize: vertical;
+  background: var(--paper); color: var(--ink);
+}
+
+/* ---------- Toolbar ---------- */
+.toolbar {
+  margin-top: 8px;
+  display: flex; gap: 6px; align-items: center; flex-wrap: wrap;
+}
+.toolbar button {
+  background: var(--paper); border: 1px solid var(--rule-dk);
+  color: var(--ink); padding: 6px 12px; border-radius: 6px;
+  font: inherit; font-weight: 600; cursor: pointer;
+}
+.toolbar button:hover { background: var(--bg); }
+.toolbar button.primary { background: var(--accent); color: var(--bg); border-color: var(--ink); }
+.toolbar button.primary:hover { background: var(--ink); }
+.toolbar button.danger  { color: var(--bad); border-color: var(--bad); }
+.toolbar button.danger:hover { background: var(--bad-bg); }
+
+/* ---------- Toast ---------- */
+.toast {
+  position: fixed; bottom: 12px; right: 12px;
+  background: var(--ink); color: var(--bg);
+  padding: 6px 12px; border-radius: 6px; font-size: 0.85rem;
+  z-index: 9999;
+}

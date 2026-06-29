@@ -1,0 +1,15 @@
+{
+  "name": "Knave 2e Sheet",
+  "version": "0.1.0",
+  "manifest_version": 1,
+  "author": "your-name-here",
+  "description": "A purpose-built character sheet for Knave 2e (with morale dial, slot inventory, DR/shield HP).",
+  "homepage_url": "https://github.com/YOUR-USERNAME/knave-sheet",
+  "action": {
+    "title": "Knave 2e Sheet",
+    "icon": "/icon.svg",
+    "popover": "/",
+    "height": 1100,
+    "width": 760
+  }
+}
